@@ -1,6 +1,7 @@
-"""Ingesta: descarga las fuentes de ARCA, extrae el texto y lo parte por sección o artículo.
+"""Ingesta: descarga las fuentes de ARCA, las parte por sección o artículo, calcula los
+embeddings y reconstruye el índice en pgvector desde cero.
 
-uso: uv run python -m app.ingest   → data/fragmentos.jsonl
+uso: uv run python -m app.ingest   (también deja data/fragmentos.jsonl para inspeccionar)
 """
 import hashlib
 import html
@@ -9,6 +10,10 @@ import re
 import statistics
 import urllib.request
 from pathlib import Path
+
+import psycopg
+
+from app.busqueda import DB_URL, embeber, vector
 
 RAW = Path("data/raw")
 MAX_CHARS = 2000  # ~500 tokens; 5 fragmentos entran holgados en el contexto de 4096. Se calibra en la etapa 4.
@@ -211,6 +216,38 @@ def partir_norma(path):
     return meta, secciones
 
 
+ESQUEMA = """
+DROP TABLE IF EXISTS fragmentos, documentos;
+CREATE TABLE documentos (
+    id text PRIMARY KEY, titulo text NOT NULL, url text NOT NULL, tipo text NOT NULL,
+    norma text, fecha date, vigente boolean NOT NULL, sha256 text NOT NULL,
+    ingestado timestamptz NOT NULL DEFAULT now()
+);
+-- ponytail: sin índice HNSW; con ~500 filas el escaneo exacto es instantáneo. Agregarlo pasando las 10.000.
+CREATE TABLE fragmentos (
+    id serial PRIMARY KEY, documento_id text NOT NULL REFERENCES documentos ON DELETE CASCADE,
+    orden int NOT NULL, seccion text NOT NULL, texto text NOT NULL, embedding vector(1024) NOT NULL
+);
+"""
+LOTE = 32
+
+
+def indexar(frags):
+    # se embebe la ruta de títulos junto al texto: "FEDummy > Mensaje de respuesta" le da contexto a una tabla suelta
+    embeddings = []
+    for i in range(0, len(frags), LOTE):
+        embeddings += embeber([f"{x['seccion']}\n\n{x['texto']}" for x in frags[i:i + LOTE]])
+    with psycopg.connect(DB_URL) as conn:  # una transacción: si algo falla, queda el índice anterior
+        conn.execute(ESQUEMA)
+        docs = {x["id"]: x for x in frags}
+        conn.cursor().executemany(
+            "INSERT INTO documentos (id, titulo, url, tipo, norma, fecha, vigente, sha256) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            [(d["id"], d["titulo"], d["url"], d["tipo"], d["norma"], d["fecha"], d["vigente"], d["sha256"]) for d in docs.values()])
+        conn.cursor().executemany(
+            "INSERT INTO fragmentos (documento_id, orden, seccion, texto, embedding) VALUES (%s,%s,%s,%s,%s::vector)",
+            [(x["id"], x["orden"], x["seccion"], x["texto"], vector(e)) for x, e in zip(frags, embeddings)])
+
+
 def fragmentos():
     for f in FUENTES:
         path = descargar(f)
@@ -242,6 +279,7 @@ if __name__ == "__main__":
     _check()
     frags = list(fragmentos())
     Path("data/fragmentos.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in frags))
+    indexar(frags)
     for f in FUENTES:
         largos = [len(x["texto"]) for x in frags if x["id"] == f["id"]]
         x0 = next(x for x in frags if x["id"] == f["id"])
