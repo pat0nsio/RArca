@@ -1,0 +1,18 @@
+services:
+  ollama:
+    image: docker.io/ollama/ollama:rocm
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - keep-groups
+    environment:
+      # RX 6650 XT = gfx1032, sin soporte oficial de ROCm; se hace pasar por gfx1030
+      HSA_OVERRIDE_GFX_VERSION: "10.3.0"
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
+volumes:
+  ollama:
