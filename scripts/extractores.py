@@ -2,11 +2,13 @@
 quedan con todas sus celdas en la misma línea? Es lo que necesita un fragmento para
 tener sentido solo.
 
-uso: uv run python scripts/extractores.py data/raw/wsfev1.pdf
+uso: uv run python -m scripts.extractores data/raw/wsfev1.pdf
 """
 import subprocess
 import sys
 import time
+
+from app.ingest import normalizar_tablas
 
 # Filas de tablas del manual, cada una con tokens que deberían quedar juntos.
 SONDAS = [
@@ -33,26 +35,7 @@ def pdftotext(path):
 
 def pymupdf4llm(path):
     from pymupdf import pymupdf4llm  # en pymupdf 2.x vive acá; el paquete pymupdf4llm 2.0 está vacío
-    return unir_filas_partidas(pymupdf4llm.to_markdown(path, show_progress=False))
-
-
-def unir_filas_partidas(md):
-    """pymupdf4llm parte en dos filas una celda centrada verticalmente: la primera sale
-    sin campo (`|||Cantidad máxima...||`). Se pega cada celda a la de la fila siguiente."""
-    out, pendiente = [], None
-    for linea in md.replace("<br>", " ").splitlines():
-        celdas = linea.split("|")
-        if linea.startswith("|") and pendiente is not None and len(celdas) == len(pendiente):
-            linea = "|".join(" ".join(f"{a} {b}".split()) for a, b in zip(pendiente, celdas))
-            celdas, pendiente = linea.split("|"), None
-        if linea.startswith("|||") and not linea.startswith("|---"):
-            pendiente = celdas
-            continue
-        if pendiente is not None:  # no hubo fila siguiente compatible: se conserva tal cual
-            out.append("|".join(pendiente))
-            pendiente = None
-        out.append(linea)
-    return "\n".join(out)
+    return normalizar_tablas(pymupdf4llm.to_markdown(path, show_progress=False))
 
 
 def pdfplumber(path):
@@ -82,8 +65,6 @@ def puntaje(texto, sondas=SONDAS):
 
 if __name__ == "__main__":
     assert puntaje("a | 10004 | 99998\nx", [("a", "10004", "99998"), ("a", "x")]) == [("a", "10004", "99998")]
-    assert unir_filas_partidas("|||Cantidad<br>máxima||\n|RegXReq|Int (4)|de registros|S|") == "|RegXReq|Int (4)|Cantidad máxima de registros|S|"
-    assert unir_filas_partidas("|||huérfana||\ntexto") == "|||huérfana||\ntexto"
     pdf = sys.argv[1]
     for nombre, fn in [("pdftotext", pdftotext), ("pymupdf4llm", pymupdf4llm), ("pdfplumber", pdfplumber)]:
         t0 = time.perf_counter()
