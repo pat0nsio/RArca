@@ -3,6 +3,7 @@ embeddings y reconstruye el índice en pgvector desde cero.
 
 uso: uv run python -m app.ingest   (también deja data/fragmentos.jsonl para inspeccionar)
 """
+import difflib
 import hashlib
 import html
 import json
@@ -174,9 +175,24 @@ def empaquetar(texto, maximo=MAX_CHARS):
     return out + [actual] if actual else out
 
 
+URL = re.compile(r"https?://[^\s<>|`)\]]+")
+
+
+def reparar_urls(md, texto_crudo):
+    """El modo layout de pymupdf4llm corrompe algunas URL subrayadas ("afp.gov.ar/...asmxi"),
+    aunque el texto plano del PDF las tiene bien: se reemplaza cada una por la más parecida de ese texto."""
+    buenas = set(URL.findall(texto_crudo))
+    def arreglar(m):
+        u = m[0]
+        return u if u in buenas else (difflib.get_close_matches(u, buenas, n=1, cutoff=0.9) or [u])[0]
+    return URL.sub(arreglar, md)
+
+
 def partir_manual(path, ignorar=None):
+    import pymupdf
     from pymupdf import pymupdf4llm
-    md = normalizar_tablas(pymupdf4llm.to_markdown(str(path), show_progress=False))
+    crudo = " ".join(p.get_text() for p in pymupdf.open(path))
+    md = normalizar_tablas(reparar_urls(pymupdf4llm.to_markdown(str(path), show_progress=False), crudo))
     return {}, [(s, t) for s, cuerpo in secciones_markdown(md, ignorar) for t in empaquetar(cuerpo)]
 
 
@@ -258,6 +274,10 @@ def fragmentos():
 
 
 def _check():
+    crudo = "https://wswhomo.afip.gov.ar/wsfev1/service.asmx y https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL"
+    assert reparar_urls("<u>https://wswhomo.afp.gov.ar/wsfev1/service.asmxi</u> https://otra.gob.ar/x", crudo) == \
+        "<u>https://wswhomo.afip.gov.ar/wsfev1/service.asmx</u> https://otra.gob.ar/x"
+    assert reparar_urls("https://wswhomo.afp.gov.ar/wsfev1/service.asmx?WSDLi", crudo) == "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL"
     centrada = "|**C**|**T**|**D**|**O**|\n|---|---|---|---|\n|||Cantidad máxima||\n|RegXReq|Int (4)|incluir en un request|S|"
     assert normalizar_tablas(centrada).splitlines()[2] == "|RegXReq|Int (4)|Cantidad máxima incluir en un request|S|"
     pagina = "|**V**|**D**|\n|---|---|\n|2.5|Se adaptan|\n||Se agregan 10096|\n\n\n|2.6|Se adaptan otros|\n|---|---|"
