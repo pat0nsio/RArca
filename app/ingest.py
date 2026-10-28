@@ -37,6 +37,24 @@ FUENTES = [
      "url": "https://biblioteca.afip.gob.ar/dcp/REAG09005700_2025_05_26"},
 ]
 
+# Micrositio de monotributo (etapa 5): páginas con contenido encontradas recorriendo /monotributo/ el 2026-10-28.
+# ponytail: lista fija; una página nueva del micrositio hay que agregarla acá (el job semanal solo detecta cambios).
+MONOTRIBUTO = [
+    "categorias.asp", "exportacion-servicios/",
+    *(f"ayuda/{p}.asp" for p in (
+        "que-es", "tipos-de-monotributo", "inicio", "CUIT", "clave-fiscal", "domicilio-fiscal-electronico",
+        "actividades", "jurisdicciones", "parametros", "desarrollo-de-la-actividad", "facturacion",
+        "constancias-y-credenciales", "pagos", "reimputacion-de-pagos", "planes-de-pagos", "recategorizacion",
+        "obra-social", "jubilacion", "reintegro-a-cumplidores", "alivio-fiscal", "monotributo-unificado",
+        "exclusion", "de-oficio", "baja", "renuncia", "cese-de-actividades", "pasaje-al-regimen-general",
+        "procedimiento")),
+    *(f"monotributo-promovido/{p}/" for p in ("que-es", "beneficios", "facturacion")),
+    *(f"monotributo-social/{p}/" for p in ("que-es-y-quienes-pueden-acceder", "como-me-inscribo-y-como-pido-la-baja",
+                                           "como-facturo", "como-pago")),
+]
+FUENTES += [{"id": "mono-" + re.sub(r"\W+", "-", p.removesuffix(".asp")).strip("-"), "tipo": "web", "norma": None,
+             "titulo": "Monotributo", "url": f"https://www.arca.gob.ar/monotributo/{p}"} for p in MONOTRIBUTO]
+
 
 def descargar(fuente):
     destino = RAW / f"{fuente['id']}.{'pdf' if fuente['url'].endswith('.pdf') else 'html'}"
@@ -251,6 +269,67 @@ def partir_norma(path):
     return meta, secciones
 
 
+# --- páginas web de ARCA (HTML → markdown) ---
+
+def _celdas(fila):
+    return [" ".join(html.unescape(re.sub(r"<[^>]+>", " ", c)).split()) for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", fila, re.S)]
+
+
+def tabla_markdown(tabla):
+    filas = [_celdas(f) for f in re.findall(r"<tr.*?</tr>", tabla, re.S)]
+    filas = [f for f in filas if any(f)]
+    if not filas:
+        return ""
+    if filas[0] and filas[0][0].startswith("Categ"):  # tabla de categorías de monotributo: una ficha por categoría
+        return fichas_categorias(tabla)
+    md = ["|" + "|".join(f"**{c}**" for c in filas[0]) + "|", "|" + "---|" * len(filas[0])]  # negrita = encabezado real
+    return "\n".join(md + ["|" + "|".join(f) + "|" for f in filas[1:]])
+
+
+def fichas_categorias(tabla):
+    """Encabezados en dos filas: "Impuesto integrado" (colspan 2) se abre en servicios / venta de cosas muebles.
+    Los nombres salen de la propia tabla, que ARCA cambia cada semestre; como ficha por categoría, cada una se cita sola."""
+    trs = re.findall(r"<tr.*?</tr>", tabla, re.S)
+    sub = iter(_celdas(trs[1]))
+    cols = []
+    for attrs, texto in re.findall(r"<th([^>]*)>(.*?)</th>", trs[0], re.S)[1:]:
+        nombre = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", texto)).split())
+        n = int(m[1]) if (m := re.search(r'colspan="?(\d+)', attrs)) else 1
+        cols += [f"{nombre} ({next(sub)})" for _ in range(n)] if n > 1 else [nombre]
+    filas = [_celdas(f) for f in trs[2:]]
+    return "\n\n".join(f"**Categoría {f[0]}**: " + "; ".join(f"{c}: {v}" for c, v in zip(cols, f[1:]))
+                         for f in filas if len(f) == len(cols) + 1)
+
+
+def html_a_markdown(raw):
+    m = re.search(r"<article.*?</article>", raw, re.S)
+    # sin <article> (solo categorías): del último h1 (el primero es el nombre del sitio) al pie oculto "Footer ARCA"
+    pie = raw.find('class="sr-only">Footer')
+    t = m[0] if m else raw[max(raw.rfind("<h1"), 0):pie if pie > 0 else None]
+    t = re.sub(r"<!--.*?-->|<(script|style|nav|header|footer)[^>]*>.*?</\1>", " ", t, flags=re.S | re.I)
+    t = re.sub(r"<table.*?</table>", lambda x: "\n\n" + tabla_markdown(x[0]) + "\n\n", t, flags=re.S)
+    t = re.sub(r"<h([1-4])[^>]*>(.*?)</h\1>",
+               lambda x: "\n\n" + "#" * (int(x[1]) + 1) + " " + " ".join(re.sub(r"<[^>]+>", " ", x[2]).split()) + "\n\n",
+               t, flags=re.S)
+    t = re.sub(r"<li[^>]*>", "\n- ", t)
+    t = re.sub(r"</p>|<br\s*/?>|</div>|</ul>|</ol>", "\n", t, flags=re.I)
+    t = html.unescape(re.sub(r"<[^>]+>", " ", t))
+    lineas = [" ".join(l.split()) for l in t.splitlines()]
+    lineas = [l for l in lineas if l != "-"]  # ítems de menú vacíos
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(lineas)).strip()
+
+
+def partir_web(path):
+    raw = path.read_text(encoding="utf-8", errors="ignore")
+    meta = {}
+    if m := re.search(r"<title>\s*(.*?)\s*(?:-|\|)", raw, re.S):
+        meta["titulo"] = "Monotributo: " + " ".join(html.unescape(m[1]).split())
+    if m := re.search(r"desde el (\d{1,2})/(\d{1,2})/(\d{4})", raw):  # "Valores de aplicación desde el 1/08/2026"
+        meta["fecha"] = f"{m[3]}-{int(m[2]):02d}-{int(m[1]):02d}"
+    md = html_a_markdown(raw)
+    return meta, [(s, t) for s, cuerpo in secciones_markdown("# Página\n" + md) for t in empaquetar(cuerpo)]
+
+
 ESQUEMA = """
 DROP TABLE IF EXISTS fragmentos, documentos;
 CREATE TABLE documentos (
@@ -288,13 +367,20 @@ def indexar(frags):
 def fragmentos():
     for f in FUENTES:
         path = descargar(f)
-        meta, secciones = partir_manual(path, f.get("ignorar")) if f["tipo"] == "manual" else partir_norma(path)
-        doc = {**f, "vigente": True, **meta, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        partir = {"manual": lambda p: partir_manual(p, f.get("ignorar")), "norma": partir_norma, "web": partir_web}[f["tipo"]]
+        meta, secciones = partir(path)
+        doc = {"fecha": None, **f, "vigente": True, **meta, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
         for orden, (seccion, texto) in enumerate(secciones):
-            yield {**doc, "seccion": f"{f['titulo']} > {seccion}" if seccion else f["titulo"], "orden": orden, "texto": texto}
+            seccion = seccion.removeprefix("Página").removeprefix(" > ")
+            yield {**doc, "seccion": f"{doc['titulo']} > {seccion}" if seccion else doc["titulo"], "orden": orden, "texto": texto}
 
 
 def _check():
+    h = '<article><h2>Pagos</h2><p>Se paga <b>hasta</b> el 20.</p><ul><li>uno</li></ul><table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table></article>'
+    assert html_a_markdown(h) == "### Pagos\n\nSe paga hasta el 20.\n\n- uno\n\n|**A**|**B**|\n|---|---|\n|1|2|", html_a_markdown(h)
+    t = ('<table><tr><th rowspan="2">Categ.</th><th rowspan="2">Ingresos</th><th colspan="2">Impuesto</th></tr>'
+         '<tr><th>Servicios</th><th>Venta</th></tr><tr><td>A</td><td>$1</td><td>$2</td><td>$3</td></tr></table>')
+    assert fichas_categorias(t) == "**Categoría A**: Ingresos: $1; Impuesto (Servicios): $2; Impuesto (Venta): $3", fichas_categorias(t)
     partes = partir_fijo("palabra " * 100, maximo=100, solape=20)
     assert all(len(x) <= 100 for x in partes) and partes[0].startswith("palabra") and len(partes) > 8
     assert [len(x) for x in partir_fijo("x" * 250, maximo=100, solape=20)] == [100, 100, 90]  # sin espacios corta en seco
