@@ -19,7 +19,9 @@ def vector(v):
 
 
 BUSQUEDA = os.getenv("BUSQUEDA", "hibrida+rerank")
-CANDIDATOS = 20  # por cada método, antes de fusionar
+# por cada método, antes de fusionar. Con el corpus ampliado (124 documentos, manuales de servicios parecidos) 20 se
+# quedaba corto: 40 por método y 30 al reranker suben la recuperación del conjunto de ajuste de 76,8% a 82,6% (+0,6 s)
+CANDIDATOS = 40
 
 VECTORIAL = """
 SELECT f.seccion, f.texto, d.url, f.embedding <=> %(q)s::vector AS puntaje
@@ -46,7 +48,7 @@ ORDER BY rrf.puntaje DESC LIMIT %(k)s"""
 # Ollama no sirve rerankers: bge-reranker-v2-m3 corre en llama.cpp con Vulkan (servicio reranker del compose).
 # En CPU tardaba 19 s por consulta; en GPU, ~1 s. Con menos candidatos se pierde la ganancia (EXPERIMENTOS.md).
 RERANKER_URL = os.getenv("RERANKER_URL", "http://localhost:8081")
-CANDIDATOS_RERANK = 20
+CANDIDATOS_RERANK = 30
 
 
 def puntuar(pregunta, textos):

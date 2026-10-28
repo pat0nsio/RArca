@@ -23,7 +23,8 @@ PARTICION = os.getenv("PARTICION", "seccion")  # "fija": ventanas de MAX_CHARS s
 MAX_CHARS = 2000  # ~500 tokens; 5 fragmentos entran holgados en el contexto de 4096. Se calibra en la etapa 4.
 
 FUENTES = [
-    {"id": "wsfev1", "tipo": "manual", "norma": "RG 4291", "fecha": "2026-09-01",
+    # v4.7 deja de ser vigente: ARCA publicó la v4.8 (revisión del 1/12/2026) en fe/ayuda/documentos/wsfev1-RG-4291.pdf
+    {"id": "wsfev1", "tipo": "manual", "norma": "RG 4291", "fecha": "2026-09-01", "vigente": False,
      "titulo": "Manual del desarrollador WSFEv1 v4.7",
      "url": "https://www.arca.gob.ar/ws/documentacion/manuales/manual-desarrollador-ARCA-COMPG.pdf"},
     {"id": "wsfex", "tipo": "manual", "norma": "RG 2758", "fecha": "2025-08-18",
@@ -53,8 +54,11 @@ MONOTRIBUTO = [
     *(f"monotributo-social/{p}/" for p in ("que-es-y-quienes-pueden-acceder", "como-me-inscribo-y-como-pido-la-baja",
                                            "como-facturo", "como-pago")),
 ]
+# Web services de ARCA (etapa 7): las entradas del corpus de mcp-arca-afip, validadas por scripts/descubrir_ws.py
+FUENTES_WS = json.loads((Path(__file__).parent / "fuentes_ws.json").read_text())
 FUENTES += [{"id": "mono-" + re.sub(r"\W+", "-", p.removesuffix(".asp")).strip("-"), "tipo": "web", "norma": None,
              "titulo": "Monotributo", "url": f"https://www.arca.gob.ar/monotributo/{p}"} for p in MONOTRIBUTO]
+FUENTES += [{**f, "norma": None} for f in FUENTES_WS]
 
 
 def archivo(fuente):
@@ -128,8 +132,8 @@ def nivel_titulo(marcas, titulo):
     if m := re.match(r"(\d+(?:\.\d+)*)\s", titulo):  # "2.1.10 Ejemplo": la numeración manda
         return 2 + m[1].count(".")  # "1" queda a la altura de "Contenido" y lo cierra
     # pymupdf4llm a veces da a "Mensaje de respuesta" el mismo nivel que el método y lo pisa en
-    # la ruta; los títulos de método "(FEDummy)", "(FEXAuthorize)" van siempre un nivel arriba
-    return 4.5 if re.search(r"\(FE\w+\)$", titulo) else len(marcas)
+    # la ruta; los títulos de método "(FEDummy)", "(getPersona)", "(BFEGetPARAM_Zonas)" van siempre un nivel arriba
+    return 4.5 if re.search(r"\((?:FE\w+|\w*[a-z][A-Z]\w*|[A-Za-z]+_\w+)\)$", titulo) else len(marcas)
 
 
 def secciones_markdown(md, ignorar=None):
@@ -321,15 +325,58 @@ def html_a_markdown(raw):
     return re.sub(r"\n{3,}", "\n\n", "\n".join(lineas)).strip()
 
 
-def partir_web(path):
+def partir_web(path, prefijo="Monotributo"):
     raw = path.read_text(encoding="utf-8", errors="ignore")
     meta = {}
-    if m := re.search(r"<title>\s*(.*?)\s*(?:-|\|)", raw, re.S):
-        meta["titulo"] = "Monotributo: " + " ".join(html.unescape(m[1]).split())
+    if m := re.search(r"<title>\s*(.*?)\s*(?:-|\||</title>)", raw, re.S):
+        meta["titulo"] = f"{prefijo}: " + " ".join(html.unescape(m[1]).split())
     if m := re.search(r"desde el (\d{1,2})/(\d{1,2})/(\d{4})", raw):  # "Valores de aplicación desde el 1/08/2026"
         meta["fecha"] = f"{m[3]}-{int(m[2]):02d}-{int(m[1]):02d}"
     md = html_a_markdown(raw)
     return meta, [(s, t) for s, cuerpo in secciones_markdown("# Página\n" + md) for t in empaquetar(cuerpo)]
+
+
+# --- WSDL de los web services: operaciones, documentación y campos de entrada/salida ---
+
+def partir_wsdl(path):
+    import xml.etree.ElementTree as ET
+    raiz = ET.parse(path).getroot()
+    local = lambda e: e.tag.rsplit("}", 1)[-1]
+    nombre = lambda q: (q or "").split(":")[-1]
+    doc = lambda e: " ".join("".join(d.itertext()).split()) if (d := next((h for h in e if local(h) == "documentation"), None)) is not None else ""
+    elementos = {e.get("name"): e for e in raiz.iter() if local(e) == "element" and e.get("name")}
+    tipos = {e.get("name"): e for e in raiz.iter() if local(e) == "complexType" and e.get("name")}
+    mensajes = {m.get("name"): [p.get("element") or p.get("type") for p in m if local(p) == "part"]
+                for m in raiz.iter() if local(m) == "message"}
+
+    def campos(ref):  # un nivel: los hijos del complexType del elemento (inline o por nombre de tipo)
+        el = elementos.get(nombre(ref))
+        ct = next((c for c in el.iter() if local(c) == "complexType"), None) if el is not None else None
+        if ct is None:
+            ct = tipos.get(nombre(el.get("type") if el is not None else ref))
+        if ct is None:
+            return []
+        return [f"{c.get('name')} ({nombre(c.get('type')) or 'complejo'})" for c in ct.iter()
+                if local(c) == "element" and c.get("name") and c is not el]
+
+    servicio = next((e for e in raiz.iter() if local(e) == "service"), None)
+    direccion = next((e.get("location") for e in raiz.iter() if local(e) == "address"), "")
+    titulo = servicio.get("name") if servicio is not None else raiz.get("name", "")
+    secciones = [("", f"Web service {titulo}. {doc(servicio) if servicio is not None else ''} Dirección: {direccion}".strip())]
+    vistas = set()
+    for op in (o for pt in raiz.iter() if local(pt) == "portType" for o in pt if local(o) == "operation"):
+        if op.get("name") in vistas:
+            continue
+        vistas.add(op.get("name"))
+        partes = [doc(op)] if doc(op) else []
+        for h in op:
+            if local(h) in ("input", "output"):
+                refs = mensajes.get(nombre(h.get("message")), [])
+                cs = [c for r in refs for c in campos(r)]
+                etiqueta = "Entrada" if local(h) == "input" else "Salida"
+                partes.append(f"{etiqueta}: {', '.join(nombre(r) for r in refs)}" + (f". Campos: {', '.join(cs)}" if cs else ""))
+        secciones += [(f"Operación {op.get('name')}", t) for t in empaquetar("\n\n".join(partes))]
+    return {}, secciones  # el título de la fuente ya dice qué web service es
 
 
 ESQUEMA = """
@@ -392,9 +439,11 @@ def fragmentos_de(f, forzar=False):
             nuevo.unlink(missing_ok=True)
     else:
         meta, secciones = partir_fuente(f, path)
-    # hash del contenido extraído, no del archivo: una página que solo cambia scripts o fechas no se reindexa
-    sha = hashlib.sha256("\n".join(f"{s}\n{t}" for s, t in secciones).encode()).hexdigest()
-    doc = {"fecha": None, **f, "vigente": True, **meta, "sha256": sha}
+    doc = {"fecha": None, "vigente": True, **f, **meta}
+    # hash del contenido extraído (no del archivo: una página que solo cambia scripts no se reindexa) y de los
+    # metadatos, para que marcar un manual como no vigente también se aplique en la actualización semanal
+    datos = json.dumps({k: doc[k] for k in ("titulo", "fecha", "vigente")}, sort_keys=True)
+    doc["sha256"] = hashlib.sha256((datos + "\n".join(f"{s}\n{t}" for s, t in secciones)).encode()).hexdigest()
     out = []
     for orden, (seccion, texto) in enumerate(secciones):
         seccion = seccion.removeprefix("Página").removeprefix(" > ")
@@ -403,7 +452,8 @@ def fragmentos_de(f, forzar=False):
 
 
 def partir_fuente(f, path):
-    return {"manual": lambda p: partir_manual(p, f.get("ignorar")), "norma": partir_norma, "web": partir_web}[f["tipo"]](path)
+    return {"manual": lambda p: partir_manual(p, f.get("ignorar")), "norma": partir_norma, "wsdl": partir_wsdl,
+            "web": lambda p: partir_web(p, f["titulo"].split(":")[0])}[f["tipo"]](path)
 
 
 def fragmentos():
@@ -444,6 +494,8 @@ def actualizar():
 
 
 def _check():
+    assert nivel_titulo("#####", "Método (getPersona)") == 4.5 and nivel_titulo("#####", "Método (BFEGetPARAM_Zonas)") == 4.5
+    assert nivel_titulo("#####", "Mensaje de respuesta") == 5 and nivel_titulo("#####", "Alcance (CUIT)") == 5
     h = '<article><h2>Pagos</h2><p>Se paga <b>hasta</b> el 20.</p><ul><li>uno</li></ul><table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table></article>'
     assert html_a_markdown(h) == "### Pagos\n\nSe paga hasta el 20.\n\n- uno\n\n|**A**|**B**|\n|---|---|\n|1|2|", html_a_markdown(h)
     t = ('<table><tr><th rowspan="2">Categ.</th><th rowspan="2">Ingresos</th><th colspan="2">Impuesto</th></tr>'

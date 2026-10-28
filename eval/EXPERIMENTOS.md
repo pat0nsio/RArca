@@ -58,6 +58,25 @@ Contra el conjunto de ajuste, facturación pierde 10 puntos de recuperación (74
 Que las dos corridas coincidan, a diferencia de las de la etapa 5 (hechas con el escritorio abierto), sugiere que
 el no determinismo venía de pasar capas a la CPU por falta de VRAM.
 
+## Corpus ampliado: 124 documentos (web services de ARCA)
+
+82 fuentes nuevas (manuales, páginas y WSDL de 50 web services, tomadas del corpus de mcp-arca-afip) y 30 preguntas
+más (81–110, 9 de reserva). Recuperación@5 con la configuración 2:
+
+| Cambio | Recuperación (ajuste, 69) | Facturación (ajuste, 31) | Latencia búsqueda |
+|---|---|---|---|
+| Corpus ampliado, 20 candidatos al reranker | 76,8% | 18/31 | ~1,4 s |
+| **40 por método, 30 al reranker** | **82,6%** | **22/31** | ~2,0 s |
+| 60 por método, 40 al reranker (todas las de facturación) | 64,4% de 45 (vs 66,7% con 40/30) | — | ~2,7 s |
+
+Se eligió 40/30 con el conjunto de ajuste. Medición final de la reserva (33 preguntas): recuperación 76,7%, exactitud
+66,7%, fidelidad 93,1%, abstención 2/3 (la pregunta "fuera del corpus" #77 tenía respuesta en la fuente), latencia
+6,0 s con el escritorio abierto.
+
+Errores encontrados en el camino: un manual de MTXCA titulado como si fuera de WSFEv1 (el título va en la ruta que se
+embebe) y el script de descubrimiento leyendo su propia salida, que vació la lista y borró del índice las 83 fuentes
+nuevas en la actualización siguiente (se regeneraron).
+
 ## Cómo leer los números
 
 - **Recuperación**: alguno de los 5 fragmentos contiene la frase de evidencia de la fuente. Es un piso: a veces

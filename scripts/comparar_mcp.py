@@ -28,7 +28,8 @@ if __name__ == "__main__":
     nombre = sys.argv[3] if len(sys.argv) > 3 else "mcp-arca-afip"
     textos_mcp = [normalizar(t) for (t,) in sqlite3.connect(sys.argv[2]).execute("SELECT text FROM chunks")]
     with psycopg.connect(DB_URL) as c:
-        textos_rarca = [normalizar(t) for (t,) in c.execute("SELECT texto FROM fragmentos")]
+        textos_rarca = [normalizar(t) for (t,) in c.execute(  # solo lo que la búsqueda puede devolver
+            "SELECT f.texto FROM fragmentos f JOIN documentos d ON d.id = f.documento_id WHERE d.vigente")]
 
     filas = []
     for q in map(json.loads, open("eval/preguntas.jsonl")):
@@ -37,7 +38,7 @@ if __name__ == "__main__":
         t0 = time.perf_counter()
         frags = buscar(q["pregunta"], 5)
         filas.append({
-            "id": q["id"], "tema": "facturación" if q["id"] <= 50 else "monotributo", "conjunto": q["conjunto"],
+            "id": q["id"], "tema": "facturación" if q["id"] <= 50 else "monotributo" if q["id"] <= 80 else "web services", "conjunto": q["conjunto"],
             "rarca": any(contiene(t, q["evidencia"]) for _, t, _, _ in frags),
             "mcp": any(contiene(f["text"], q["evidencia"]) for f in mcp[q["id"]]["frags"]),
             "en_rarca": en_indice(textos_rarca, q["evidencia"]), "en_mcp": en_indice(textos_mcp, q["evidencia"]),
@@ -49,8 +50,8 @@ if __name__ == "__main__":
 
     print(f"Comparación RArca vs {nombre} | {len(filas)} preguntas con evidencia, recuperación@5\n")
     # la reserva no se usó para ajustar RArca: es la comparación sin ventaja de haber visto las preguntas
-    grupos = [("facturación", lambda f: f["tema"] == "facturación"), ("monotributo", lambda f: f["tema"] == "monotributo"),
-              ("total", lambda f: True), ("solo reserva", lambda f: f["conjunto"] == "reserva")]
+    grupos = [(t, lambda f, t=t: f["tema"] == t) for t in ("facturación", "monotributo", "web services")]
+    grupos += [("total", lambda f: True), ("solo reserva", lambda f: f["conjunto"] == "reserva")]
     for nombre_grupo, cond in grupos:
         sel = [f for f in filas if cond(f)]
         ambos = [f for f in sel if f["en_rarca"] and f["en_mcp"]]

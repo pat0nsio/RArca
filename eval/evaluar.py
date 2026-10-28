@@ -45,7 +45,8 @@ def es_abstencion(respuesta):
 def verificar_evidencias(preguntas):
     """Cada evidencia tiene que estar en el índice; si no, el error es del set de evaluación."""
     with psycopg.connect(DB_URL) as c:
-        textos = [normalizar(t) for (t,) in c.execute("SELECT texto FROM fragmentos")]
+        textos = [normalizar(t) for (t,) in c.execute(  # solo lo que la búsqueda puede devolver
+            "SELECT f.texto FROM fragmentos f JOIN documentos d ON d.id = f.documento_id WHERE d.vigente")]
     ok = True
     for q in preguntas:
         for e in q["evidencia"]:

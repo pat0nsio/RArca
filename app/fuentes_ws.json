@@ -1,0 +1,667 @@
+[
+ {
+  "id": "ws-wsaa-1",
+  "ws": "wsaa",
+  "tipo": "manual",
+  "titulo": "WSAA — Autenticación y Autorización: WSAAmanualDev.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSAA/WSAAmanualDev.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsaa-2",
+  "ws": "wsaa",
+  "tipo": "manual",
+  "titulo": "WSAA — Autenticación y Autorización: Especificacion_Tecnica_WSAA_1.2.2.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSAA/Especificacion_Tecnica_WSAA_1.2.2.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsaa-3",
+  "ws": "wsaa",
+  "tipo": "manual",
+  "titulo": "WSAA — Autenticación y Autorización: wsaa_obtener_certificado_produccion.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSAA/wsaa_obtener_certificado_produccion.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsaa-4",
+  "ws": "wsaa",
+  "tipo": "manual",
+  "titulo": "WSAA — Autenticación y Autorización: wsaa_asociar_certificado_a_wsn_produccion.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSAA/wsaa_asociar_certificado_a_wsn_produccion.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsaa-5",
+  "ws": "wsaa",
+  "tipo": "web",
+  "titulo": "WSAA — Autenticación y Autorización: wsaa.asp",
+  "url": "https://www.afip.gob.ar/ws/documentacion/wsaa.asp",
+  "fecha": null
+ },
+ {
+  "id": "ws-certificados-1",
+  "ws": "certificados",
+  "tipo": "manual",
+  "titulo": "Certificados Digitales y WSASS: WSASS_como_adherirse.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSASS/WSASS_como_adherirse.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-certificados-2",
+  "ws": "certificados",
+  "tipo": "manual",
+  "titulo": "Certificados Digitales y WSASS: WSASS_manual.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSASS/WSASS_manual.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-certificados-3",
+  "ws": "certificados",
+  "tipo": "manual",
+  "titulo": "Certificados Digitales y WSASS: WSAA.ObtenerCertificado.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSAA/WSAA.ObtenerCertificado.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-certificados-4",
+  "ws": "certificados",
+  "tipo": "manual",
+  "titulo": "Certificados Digitales y WSASS: ADMINREL.DelegarWS.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSAA/ADMINREL.DelegarWS.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-certificados-5",
+  "ws": "certificados",
+  "tipo": "web",
+  "titulo": "Certificados Digitales y WSASS: certificados.asp",
+  "url": "https://www.afip.gob.ar/ws/documentacion/certificados.asp",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-1",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-2",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): introduccion.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/introduccion.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-3",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): funcionalidades.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/funcionalidades.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-4",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): conceptos.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/conceptos.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-5",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): generarcsr.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/generarcsr.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-6",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): crearcertificado.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/crearcertificado.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-7",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): crearautorizacion.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/crearautorizacion.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-8",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): agregarcertificado.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/agregarcertificado.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-9",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): verservicios.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/verservicios.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-10",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): vercertificados.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/vercertificados.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-11",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): verautorizaciones.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/verautorizaciones.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsass_homo-12",
+  "ws": "wsass_homo",
+  "tipo": "web",
+  "titulo": "WSASS — Manual del Usuario (Homologación): eliminarautorizacion.html",
+  "url": "https://www.afip.gob.ar/ws/WSASS/html/eliminarautorizacion.html",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsfev1-1",
+  "ws": "wsfev1",
+  "tipo": "manual",
+  "titulo": "WSFEv1 — Factura Electrónica (comprobantes A/B/C/M): wsfev1-RG-4291.pdf",
+  "url": "https://www.afip.gob.ar/fe/ayuda/documentos/wsfev1-RG-4291.pdf",
+  "fecha": "2026-12-01"
+ },
+ {
+  "id": "ws-wsfev1-2",
+  "ws": "wsfev1",
+  "tipo": "web",
+  "titulo": "WSFEv1 — Factura Electrónica (comprobantes A/B/C/M): ws-factura-electronica.asp",
+  "url": "https://www.afip.gob.ar/ws/documentacion/ws-factura-electronica.asp",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsfev1-3",
+  "ws": "wsfev1",
+  "tipo": "wsdl",
+  "titulo": "WSFEv1 — Factura Electrónica (comprobantes A/B/C/M): service.asmx",
+  "url": "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsfev1-4",
+  "ws": "wsfev1",
+  "tipo": "manual",
+  "titulo": "WSSEG — Seguros de Caución: WSSEG-ManualParaElDesarrollador_ARCA.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentacion/manuales/WSSEG-ManualParaElDesarrollador_ARCA.pdf",
+  "fecha": null,
+  "vigente": false,
+  "reemplazada_por": "https://www.afip.gob.ar/fe/ayuda/documentos/wsseg-RG-2668.pdf",
+  "motivo": "v0.9 (21/5/2025) → v1.0 (9/6/2025)"
+ },
+ {
+  "id": "ws-wsfev1-5",
+  "ws": "wsfev1",
+  "tipo": "manual",
+  "titulo": "WSCT — Comprobantes T (Turismo): Manual_Desarrollador_WSCT_v1.6.4.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentacion/manuales/Manual_Desarrollador_WSCT_v1.6.4.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsfev1-6",
+  "ws": "wsfev1",
+  "tipo": "manual",
+  "titulo": "WSMTXCA — Factura Electrónica con detalle (Cód. MTX): wsmtxca-RG-2904.pdf",
+  "url": "https://www.afip.gob.ar/fe/ayuda/documentos/wsmtxca-RG-2904.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsfev1-7",
+  "ws": "wsfev1",
+  "tipo": "manual",
+  "titulo": "WSBFEv1 — Bonos Fiscales Electrónicos: WSBFEV1-ManualParaElDesarrollador_ARCA_V3_0.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentacion/manuales/WSBFEV1-ManualParaElDesarrollador_ARCA_V3_0.pdf",
+  "fecha": null,
+  "vigente": false,
+  "reemplazada_por": "https://www.afip.gob.ar/fe/ayuda/documentos/wsbfev1-RG-5427-y-2861.pdf",
+  "motivo": "v3.0 (17/3/2025) → v3.2 (9/6/2025)"
+ },
+ {
+  "id": "ws-wsmtxca-1",
+  "ws": "wsmtxca",
+  "tipo": "manual",
+  "titulo": "WSMTXCA — Factura Electrónica con detalle (Cód. MTX): Web-Service-MTXCA-v25.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentacion/manuales/Web-Service-MTXCA-v25.pdf",
+  "fecha": null,
+  "vigente": false,
+  "reemplazada_por": "https://www.afip.gob.ar/fe/ayuda/documentos/wsmtxca-RG-2904.pdf",
+  "motivo": "v0.25.6 → v0.25.8"
+ },
+ {
+  "id": "ws-wsbfev1-1",
+  "ws": "wsbfev1",
+  "tipo": "manual",
+  "titulo": "WSBFEv1 — Bonos Fiscales Electrónicos: wsbfev1-RG-5427-y-2861.pdf",
+  "url": "https://www.afip.gob.ar/fe/ayuda/documentos/wsbfev1-RG-5427-y-2861.pdf",
+  "fecha": "2025-06-09"
+ },
+ {
+  "id": "ws-wsbfev1-2",
+  "ws": "wsbfev1",
+  "tipo": "wsdl",
+  "titulo": "WSBFEv1 — Bonos Fiscales Electrónicos: service.asmx",
+  "url": "https://wswhomo.afip.gov.ar/wsbfev1/service.asmx?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsfex-1",
+  "ws": "wsfex",
+  "tipo": "wsdl",
+  "titulo": "WSFEXv1 — Factura Electrónica de Exportación: service.asmx",
+  "url": "https://wswhomo.afip.gov.ar/wsfexv1/service.asmx?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsct-1",
+  "ws": "wsct",
+  "tipo": "wsdl",
+  "titulo": "WSCT — Comprobantes T (Turismo): CTService",
+  "url": "https://fwshomo.afip.gov.ar/wsct/CTService?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsseg-1",
+  "ws": "wsseg",
+  "tipo": "manual",
+  "titulo": "WSSEG — Seguros de Caución: wsseg-RG-2668.pdf",
+  "url": "https://www.afip.gob.ar/fe/ayuda/documentos/wsseg-RG-2668.pdf",
+  "fecha": "2025-06-09"
+ },
+ {
+  "id": "ws-wsseg-2",
+  "ws": "wsseg",
+  "tipo": "manual",
+  "titulo": "WSSEG — Seguros de Caución: WSSEG-GuiaAdicionalParaElProgramador.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSSEG/WSSEG-GuiaAdicionalParaElProgramador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_constancia_inscripcion-1",
+  "ws": "ws_sr_constancia_inscripcion",
+  "tipo": "manual",
+  "titulo": "WS-SR-ConstanciaInscripcion — Constancia de Inscripción: manual_ws_sr_ws_constancia_inscripcion.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSCI/manual_ws_sr_ws_constancia_inscripcion.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a4-1",
+  "ws": "ws_sr_padron_a4",
+  "tipo": "manual",
+  "titulo": "WS-SR-Padron-A4 — Consulta a Padrón Alcance 4: manual_ws_sr_padron_a4_v1.3.pdf",
+  "url": "https://www.afip.gob.ar/ws/ws_sr_padron_a4/manual_ws_sr_padron_a4_v1.3.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a4-2",
+  "ws": "ws_sr_padron_a4",
+  "tipo": "wsdl",
+  "titulo": "WS-SR-Padron-A4 — Consulta a Padrón Alcance 4: personaServiceA4",
+  "url": "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA4?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a5-1",
+  "ws": "ws_sr_padron_a5",
+  "tipo": "wsdl",
+  "titulo": "WS-SR-Padron-A5 — Consulta a Padrón Alcance 5: personaServiceA5",
+  "url": "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a10-1",
+  "ws": "ws_sr_padron_a10",
+  "tipo": "manual",
+  "titulo": "WS-SR-Padron-A10 — Consulta a Padrón Alcance 10: manual_ws_sr_padron_a10_v1.2.pdf",
+  "url": "https://www.afip.gob.ar/ws/ws_sr_padron_a10/manual_ws_sr_padron_a10_v1.2.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a10-2",
+  "ws": "ws_sr_padron_a10",
+  "tipo": "wsdl",
+  "titulo": "WS-SR-Padron-A10 — Consulta a Padrón Alcance 10: personaServiceA10",
+  "url": "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA10?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a13-1",
+  "ws": "ws_sr_padron_a13",
+  "tipo": "manual",
+  "titulo": "WS-SR-Padron-A13 — Consulta a Padrón Alcance 13: manual-ws-sr-padron-a13-v1.4.pdf",
+  "url": "https://www.afip.gob.ar/ws/ws-padron-a13/manual-ws-sr-padron-a13-v1.4.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a13-2",
+  "ws": "ws_sr_padron_a13",
+  "tipo": "wsdl",
+  "titulo": "WS-SR-Padron-A13 — Consulta a Padrón Alcance 13: personaServiceA13",
+  "url": "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA13?WSDL",
+  "fecha": null
+ },
+ {
+  "id": "ws-ws_sr_padron_a100-1",
+  "ws": "ws_sr_padron_a100",
+  "tipo": "manual",
+  "titulo": "WS-SR-Padron-A100 — Consulta a Padrón Alcance 100: manual_ws_sr_padron_a100_v2.1.pdf",
+  "url": "https://www.afip.gob.ar/ws/ws_sr_padron_a100/manual_ws_sr_padron_a100_v2.1.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wscdcv1-1",
+  "ws": "wscdcv1",
+  "tipo": "manual",
+  "titulo": "WSCDCV1 — Constatación de Comprobantes: WSCDC-manual-desarrollador-v4.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSCDCV1/WSCDC-manual-desarrollador-v4.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wscpe-1",
+  "ws": "wscpe",
+  "tipo": "manual",
+  "titulo": "WSCPE — Carta de Porte Electrónica: manual-wscpe.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentos/manual-wscpe.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wscta-1",
+  "ws": "wscta",
+  "tipo": "manual",
+  "titulo": "WSCTA — Certificados DNRPA (CETA): WSCTA-ManualParaElDesarrollador.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSCTA/WSCTA-ManualParaElDesarrollador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsagr-1",
+  "ws": "wsagr",
+  "tipo": "manual",
+  "titulo": "WSAGR — AGR (Reproweb): manual_desarrollador_wsagr.pdf",
+  "url": "https://www.afip.gob.ar/ws/agrREPROWEB/manual_desarrollador_wsagr.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsbfe_legacy-1",
+  "ws": "wsbfe_legacy",
+  "tipo": "manual",
+  "titulo": "WSBFE — Bonos Fiscales Electrónicos (legacy): WSBFE - Manual para el desarrollador_V1_1.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSBFE/WSBFE%20-%20Manual%20para%20el%20desarrollador_V1_1.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsbfe_legacy-2",
+  "ws": "wsbfe_legacy",
+  "tipo": "manual",
+  "titulo": "WSBFE — Bonos Fiscales Electrónicos (legacy): WSBFE-GuiaAdicionalParaElProgramador.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSBFE/WSBFE-GuiaAdicionalParaElProgramador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wscec-1",
+  "ws": "wscec",
+  "tipo": "manual",
+  "titulo": "WSCEC — Comprobantes Ley Economía del Conocimiento: manual-wscec.pdf",
+  "url": "https://www.afip.gob.ar/ws/wscec/manual-wscec.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsapoc-1",
+  "ws": "wsapoc",
+  "tipo": "manual",
+  "titulo": "WSAPOC — Contribuyentes Apócrifos: ManualUsuario-1.0.9.pdf",
+  "url": "https://www.afip.gob.ar/ws/wsapoc/ManualUsuario-1.0.9.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-sud_contrataciones-1",
+  "ws": "sud_contrataciones",
+  "tipo": "manual",
+  "titulo": "SUD-Contrataciones — Servicio de Deuda Proveedores del Estado: manual_sud_contrataciones.pdf",
+  "url": "https://www.afip.gob.ar/ws/SudContrataciones/manual_sud_contrataciones.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-sud_restricciones-1",
+  "ws": "sud_restricciones",
+  "tipo": "manual",
+  "titulo": "SUD-Restricciones — Servicio de Deuda: manual_sud_restricciones_1.3.pdf",
+  "url": "https://www.afip.gob.ar/ws/SudRestricciones/manual_sud_restricciones_1.3.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsccomu-1",
+  "ws": "wsccomu",
+  "tipo": "manual",
+  "titulo": "WSCComu — Comunicaciones de Ventanilla Electrónica: vecuwsconcomunicaciones.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSCComu/vecuwsconcomunicaciones.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wscreatevep-1",
+  "ws": "wscreatevep",
+  "tipo": "manual",
+  "titulo": "WSCREATEVEP — Creación de VEPs: ManualParaElDesarrolladorDelCreateVEPwebService.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSCREATEVEP/ManualParaElDesarrolladorDelCreateVEPwebService.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-jaza-1",
+  "ws": "jaza",
+  "tipo": "manual",
+  "titulo": "JAZA Service — Juegos de Azar: Web_Service_JAZA_20240122_v1.0.5.pdf",
+  "url": "https://www.afip.gob.ar/juegosdeazar/documentos/Web_Service_JAZA_20240122_v1.0.5.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wslum-1",
+  "ws": "wslum",
+  "tipo": "manual",
+  "titulo": "WSLUM — Liquidación Mensual Única (Lechería): manual_wslum1.4.pdf",
+  "url": "https://www.afip.gob.ar/ws/wslum/manual_wslum1.4.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wslca-1",
+  "ws": "wslca",
+  "tipo": "manual",
+  "titulo": "WSLCA — Liquidación de Caña de Azúcar: manual_wslca.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSLCA/manual_wslca.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsltv-1",
+  "ws": "wsltv",
+  "tipo": "manual",
+  "titulo": "WSLTV — Liquidación de Tabaco Verde: manual-wsltv-1.4.pdf",
+  "url": "https://www.afip.gob.ar/ws/tabaco/manual-wsltv-1.4.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wslpg-1",
+  "ws": "wslpg",
+  "tipo": "manual",
+  "titulo": "WSLPG — Liquidación Primaria de Granos: manual-wslpg.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSLiquiGranos/manual-wslpg.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wslsp-1",
+  "ws": "wslsp",
+  "tipo": "manual",
+  "titulo": "WSLSP — Liquidación Sector Pecuario: manual-wslsp-2.0.4.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSLSP/manual-wslsp-2.0.4.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsddjj-1",
+  "ws": "wsddjj",
+  "tipo": "manual",
+  "titulo": "WSDDJJ — Presentación de DDJJ: WSPresentaciondeDDJJManualparaelDesarrollador.pdf",
+  "url": "https://www.afip.gob.ar/ws/wsddjj/WSPresentaciondeDDJJManualparaelDesarrollador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsrgiva-1",
+  "ws": "wsrgiva",
+  "tipo": "manual",
+  "titulo": "WSRGIVA — Régimen Percepción IVA: manualdesarrolladorWSRGIVA.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentacion/manuales/manualdesarrolladorWSRGIVA.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wstabaco-1",
+  "ws": "wstabaco",
+  "tipo": "manual",
+  "titulo": "WSTABACO — Régimen Tabacalero: Manual_Desarrollador_WSTABACO_v1_0.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSTABACO/Manual_Desarrollador_WSTABACO_v1_0.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsicdb-1",
+  "ws": "wsicdb",
+  "tipo": "manual",
+  "titulo": "WSICDB — Registro de Beneficios Fiscales ICDB: manual_wsicdb1.2.pdf",
+  "url": "https://www.afip.gob.ar/ws/registroICBD/manual_wsicdb1.2.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsremharina-1",
+  "ws": "wsremharina",
+  "tipo": "manual",
+  "titulo": "WSREMHARINA — Remito Harinas de Trigo: Manual_Desarrollador_WSREMHARINA_v2.9.pdf",
+  "url": "https://www.afip.gob.ar/ws/remitoHTSDMT/Manual_Desarrollador_WSREMHARINA_v2.9.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsremazucar-1",
+  "ws": "wsremazucar",
+  "tipo": "manual",
+  "titulo": "WSREMAZUCAR — Remito Electrónico Azúcar: Manual-DesarrolladorWSREMAZUCAR v2_0_9.pdf",
+  "url": "https://www.afip.gob.ar/ws/remitoElecAzucar/Manual-DesarrolladorWSREMAZUCAR%20v2_0_9.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsremcarne-1",
+  "ws": "wsremcarne",
+  "tipo": "manual",
+  "titulo": "WSREMCARNE — Remito Electrónico Cárnico: Manual_Desarrollador_WSREMCARNE_v3_6.pdf",
+  "url": "https://www.afip.gob.ar/ws/remitoElecCarnico/Manual_Desarrollador_WSREMCARNE_v3_6.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-sire_iva-1",
+  "ws": "sire_iva",
+  "tipo": "manual",
+  "titulo": "SIRE-IVA — Sistema Integral de Retenciones Electrónicas: SOAP-SIRE-IVA-Manualparaeldesarrollador_V1_0_0.pdf",
+  "url": "https://www.afip.gob.ar/ws/sistemaIntegralRetenElect/SOAP-SIRE-IVA-Manualparaeldesarrollador_V1_0_0.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-trabajo_f931-1",
+  "ws": "trabajo_f931",
+  "tipo": "manual",
+  "titulo": "Trabajo F931 — SIPA DDJJ F931: TrabajoF931-ManualParaElDesarrollador.pdf",
+  "url": "https://www.afip.gob.ar/ws/TRABAJO_F931/TrabajoF931-ManualParaElDesarrollador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wdiautides-1",
+  "ws": "wdiautides",
+  "tipo": "manual",
+  "titulo": "WDIAUTIDES — Actualización/Consulta PEMA: ManualDesarrollador-WdiaUtiDEs.pdf",
+  "url": "https://www.afip.gob.ar/ws/WDIAUTIDES/ManualDesarrollador-WdiaUtiDEs.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wgesinv-1",
+  "ws": "wgesinv",
+  "tipo": "manual",
+  "titulo": "WGESINV — Despachos INV Vitivinicultura: wgesinv-ManualParaElDesarrollador.pdf",
+  "url": "https://www.afip.gob.ar/ws/WGESINV/wgesinv-ManualParaElDesarrollador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wgestabref-1",
+  "ws": "wgestabref",
+  "tipo": "manual",
+  "titulo": "WGESTABREF — Consulta de Tablas de Referencia: Manual_del_Desarrollador_wgestabref.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentos/Manual_del_Desarrollador_wgestabref.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wconsdepfiel-1",
+  "ws": "wconsdepfiel",
+  "tipo": "manual",
+  "titulo": "WConsDepFiel — Consultas Depositario Fiel: Manual-Desarrollador-wConsDepFiel.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentos/Manual-Desarrollador-wConsDepFiel.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wgestiendaslibres-1",
+  "ws": "wgestiendaslibres",
+  "tipo": "manual",
+  "titulo": "WGESTiendasLibres — Control stock tiendas libres: ManualDesa-wgestiendaslibres.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentos/ManualDesa-wgestiendaslibres.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wsces-1",
+  "ws": "wsces",
+  "tipo": "manual",
+  "titulo": "WSCES — Coraza Electrónica de Seguridad: ManualDesa-wgesprecintosdepfis.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSCES/ManualDesa-wgesprecintosdepfis.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wdigdepfiel-1",
+  "ws": "wdigdepfiel",
+  "tipo": "manual",
+  "titulo": "WDigDepFiel — Digitalización Depositario Fiel: ManualDesaDigDepFiel.pdf",
+  "url": "https://www.afip.gob.ar/ws/documentos/ManualDesaDigDepFiel.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wdepmovimientos-1",
+  "ws": "wdepmovimientos",
+  "tipo": "manual",
+  "titulo": "WDEPMOVIMIENTOS — Movimientos Ingreso/Egreso: wdepmovimientos-ManualParaElDesarrollador.pdf",
+  "url": "https://www.afip.gob.ar/ws/WDEPMOVIMIENTOS/wdepmovimientos-ManualParaElDesarrollador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wenysa-1",
+  "ws": "wenysa",
+  "tipo": "manual",
+  "titulo": "WEnysa — Eventos Entrada/Salida Vehículos: wEnysa-ManualDesarrollador.pdf",
+  "url": "https://www.afip.gob.ar/ws/wEnysa/wEnysa-ManualDesarrollador.pdf",
+  "fecha": null
+ },
+ {
+  "id": "ws-wssv-1",
+  "ws": "wssv",
+  "tipo": "manual",
+  "titulo": "WSSV — Seguimiento Vehicular: WSSV-ManualParaElDesarrollador.pdf",
+  "url": "https://www.afip.gob.ar/ws/WSSV/WSSV-ManualParaElDesarrollador.pdf",
+  "fecha": null
+ }
+]
