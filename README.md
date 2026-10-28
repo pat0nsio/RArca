@@ -31,6 +31,15 @@ Cómo se llegó ahí, una mejora por vez (facturación, 31 preguntas con evidenc
 Detalle, variantes descartadas (otro generador, partición fija, reranker en CPU, juez con razonamiento) y el
 análisis de ruido entre corridas en [`eval/EXPERIMENTOS.md`](eval/EXPERIMENTOS.md).
 
+## Comparación con una herramienta existente
+
+Sobre el **mismo corpus y las mismas preguntas**, RArca recupera la evidencia en el **81,9%** de los casos contra
+**61,1%** de [mcp-arca-afip](https://github.com/faeralan/mcp-arca-afip), un servidor MCP open source con búsqueda
+híbrida (BM25 + e5-small + RRF); en las 22 preguntas de reserva, 77,3% contra 50,0%. RArca con búsqueda solo
+vectorial ya lo supera (72,2%): la mayor parte de la ventaja viene de la extracción con títulos y tablas y de la
+partición por sección. A cambio, mcp-arca-afip busca en ~4 ms en CPU y RArca necesita una GPU. Método, parche de
+robustez aplicado a su ingesta y cómo reproducirlo en [`eval/COMPARACION_MCP.md`](eval/COMPARACION_MCP.md).
+
 ## Arquitectura
 
 ```mermaid
@@ -109,7 +118,8 @@ La RX 6650 XT (gfx1032) no tiene soporte oficial de ROCm: el compose la presenta
 
 ```
 app/        ingest.py (descarga, partición, embeddings), busqueda.py, rag.py, main.py, static/index.html
-eval/       preguntas.jsonl (80), evaluar.py, validar_juez.py, validacion_juez.md, EXPERIMENTOS.md
-scripts/    preparar.sh, extractores.py (comparación de extractores de PDF)
+eval/       preguntas.jsonl (80), evaluar.py, validar_juez.py, validacion_juez.md, EXPERIMENTOS.md,
+            COMPARACION_MCP.md, mcp/ (artefactos de la comparación)
+scripts/    preparar.sh, extractores.py (comparación de extractores de PDF), comparar_mcp.py
 deploy/     servicio y temporizador systemd para la actualización semanal
 ```

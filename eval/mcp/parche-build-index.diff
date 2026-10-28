@@ -1,0 +1,19 @@
+diff --git a/ingest/build-index.ts b/ingest/build-index.ts
+index 7edd8c2..8f6d244 100644
+--- a/ingest/build-index.ts
++++ b/ingest/build-index.ts
+@@ -25,7 +25,13 @@ async function buildIndex(): Promise<void> {
+ 
+   // 2. Parse
+   console.log('\nParsing...');
+-  const parsedDocs = await Promise.all(docs.map((d) => parseDoc(d)));
++  // [parche RArca] un PDF enlazado que en realidad es HTML hacía fallar todo el build con Promise.all
++  const settled = await Promise.allSettled(docs.map((d) => parseDoc(d)));
++  const parsedDocs = settled.flatMap((r, i) => {
++    if (r.status === 'fulfilled') return [r.value];
++    console.warn(`  Skipped parse ${docs[i].url}: ${(r.reason as Error).message}`);
++    return [];
++  });
+   console.log(`Parsed: ${parsedDocs.length} documents`);
+ 
+   // 3. Chunk
