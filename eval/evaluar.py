@@ -150,6 +150,7 @@ if __name__ == "__main__":
     a = argparse.ArgumentParser()
     a.add_argument("--conjunto", choices=["ajuste", "reserva", "todas"], default="ajuste")
     a.add_argument("--solo-recuperacion", action="store_true")
+    a.add_argument("--sin-verificar", action="store_true", help="no exigir que cada evidencia esté en el índice (experimentos de partición)")
     a.add_argument("--busqueda", choices=["vectorial", "hibrida", "hibrida+rerank"])
     a.add_argument("--k", type=int, default=5)
     a.add_argument("--modelo", default=MODELO)
@@ -161,7 +162,7 @@ if __name__ == "__main__":
 
     preguntas = [q for q in map(json.loads, open("eval/preguntas.jsonl")) if args.conjunto in ("todas", q["conjunto"])]
     con_evidencia = [q for q in preguntas if q["evidencia"]]
-    if not verificar_evidencias(con_evidencia):
+    if not verificar_evidencias(con_evidencia) and not args.sin_verificar:
         sys.exit("hay evidencias que no están en el índice: corregir el set antes de medir")
 
     if args.solo_recuperacion:

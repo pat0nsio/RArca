@@ -8,9 +8,18 @@ Generador qwen3:8b, k = 5, RX 6650 XT (8 GB). Corridas en `eval/resultados/`.
 | 0 | Búsqueda vectorial (bge-m3) | 54,8% | 62,9% | 83,9% | 100% | 5,2 s / 7,2 s |
 | 1 | + híbrida: full-text en español + vectores, RRF | **64,5%** | **66,1%** | 86,7% | 100% | 5,9 s / 7,7 s |
 | 2 | + reranker bge-reranker-v2-m3 (GGUF Q8, llama.cpp Vulkan en GPU) sobre 20 candidatos | **74,2%** | **72,6%** | **90,0%** | 100% | 7,0 s / 8,4 s |
+| 3a | Variante de 2: generador llama3.1:8b en vez de qwen3:8b | 74,2% | 66,1% | 82,8% | 75% | 6,9 s / 10,4 s |
+| 3b | Variante de 2: partición fija (2000 caracteres, 200 de solapamiento) en vez de por sección | 77,4% | 72,6% | 90,0% | 100% | 8,2 s / 9,8 s |
 
 El reranker cuesta ~1 s por consulta en GPU (la generación, 3,5 a 7 s). Con los tres modelos en la placa
 (qwen3:8b 6,2 GB, bge-m3 0,7 GB, reranker 0,8 GB) no entra el escritorio: las mediciones son sin sesión gráfica.
+
+**Conclusiones de 3a y 3b.** qwen3:8b queda como generador: con la misma recuperación es mejor en exactitud,
+fidelidad y abstención (llama respondió 1 de 4 preguntas fuera del corpus), aunque el juez de exactitud sea llama.
+La partición por sección no le gana a la fija en calidad (77,4% contra 74,2% de recuperación es 1 pregunta de 31),
+pero los fragmentos fijos miden siempre ~2000 caracteres y los de sección ~1000 de mediana: la fija le da más texto
+al modelo, y eso cuesta 1,2 s más por consulta. Se mantiene por sección: más rápida y con citas que nombran la
+sección exacta ("FEDummy > Mensaje de respuesta") en lugar de solo el documento.
 
 ## Cómo leer los números
 

@@ -7,6 +7,7 @@ import difflib
 import hashlib
 import html
 import json
+import os
 import re
 import statistics
 import urllib.request
@@ -17,6 +18,7 @@ import psycopg
 from app.busqueda import DB_URL, embeber, vector
 
 RAW = Path("data/raw")
+PARTICION = os.getenv("PARTICION", "seccion")  # "fija": ventanas de MAX_CHARS sin mirar la estructura (experimento)
 MAX_CHARS = 2000  # ~500 tokens; 5 fragmentos entran holgados en el contexto de 4096. Se calibra en la etapa 4.
 
 FUENTES = [
@@ -193,7 +195,22 @@ def partir_manual(path, ignorar=None):
     from pymupdf import pymupdf4llm
     crudo = " ".join(p.get_text() for p in pymupdf.open(path))
     md = normalizar_tablas(reparar_urls(pymupdf4llm.to_markdown(str(path), show_progress=False), crudo))
+    if PARTICION == "fija":
+        return {}, [("", t) for t in partir_fijo(md)]
     return {}, [(s, t) for s, cuerpo in secciones_markdown(md, ignorar) for t in empaquetar(cuerpo)]
+
+
+def partir_fijo(texto, maximo=MAX_CHARS, solape=200):
+    """Línea base del experimento de partición: ventanas de largo fijo con solapamiento, cortando en un espacio."""
+    out, i = [], 0
+    while i < len(texto):
+        corte = texto.rfind(" ", i + maximo // 2, i + maximo)  # -1 si no hay espacio: se corta en seco
+        fin = len(texto) if i + maximo >= len(texto) else (corte if corte > 0 else i + maximo)
+        out.append(texto[i:fin].strip())
+        if fin >= len(texto):
+            break
+        i = max(fin - solape, i + 1)
+    return [x for x in out if x]
 
 
 # --- normas (HTML de la biblioteca electrónica) ---
@@ -215,6 +232,8 @@ def partir_norma(path):
     inicio = min(i for i in (t.find("VISTO"), t.find("ARTÍCULO 1")) if i >= 0)
     fin = t.find("FIRMANTES", inicio)
     cuerpo = t[inicio:fin if fin > 0 else None]
+    if PARTICION == "fija":
+        return meta, [("", x) for x in partir_fijo(cuerpo)]
 
     # Solo corta en artículos que siguen la secuencia: un "ARTÍCULO 6°" citado dentro del
     # artículo 1 (texto que modifica otra norma) no es el artículo 6 de esta norma.
@@ -276,6 +295,9 @@ def fragmentos():
 
 
 def _check():
+    partes = partir_fijo("palabra " * 100, maximo=100, solape=20)
+    assert all(len(x) <= 100 for x in partes) and partes[0].startswith("palabra") and len(partes) > 8
+    assert [len(x) for x in partir_fijo("x" * 250, maximo=100, solape=20)] == [100, 100, 90]  # sin espacios corta en seco
     crudo = "https://wswhomo.afip.gov.ar/wsfev1/service.asmx y https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL"
     assert reparar_urls("<u>https://wswhomo.afp.gov.ar/wsfev1/service.asmxi</u> https://otra.gob.ar/x", crudo) == \
         "<u>https://wswhomo.afip.gov.ar/wsfev1/service.asmx</u> https://otra.gob.ar/x"
