@@ -6,7 +6,9 @@
 - Abstención: las preguntas fuera del corpus deben responder "No sé".
 - Latencia: mediana y p95 de búsqueda + generación.
 
-uso: uv run python -m eval.evaluar [--solo-recuperacion] [--k 5] [--modelo qwen3:8b] [--juez llama3.1:8b]
+uso: uv run python -m eval.evaluar [--conjunto ajuste|reserva|todas] [--solo-recuperacion] [--k 5] [--modelo M] [--juez M] [--piensa]
+
+Las mejoras se miden con "ajuste"; "reserva" se usa una sola vez, al final, para no inflar los números.
 """
 import argparse
 import datetime
@@ -18,7 +20,7 @@ from pathlib import Path
 import httpx
 import psycopg
 
-from app.busqueda import DB_URL, OLLAMA, buscar
+from app.busqueda import BUSQUEDA, DB_URL, OLLAMA, buscar
 from app.rag import MODELO, NUM_CTX, responder
 
 DEMASIADO_COMUN = 15  # una evidencia en más fragmentos que esto vuelve la métrica demasiado fácil
@@ -54,54 +56,73 @@ def verificar_evidencias(preguntas):
     return ok
 
 
-def juez(modelo, sistema, usuario, esquema):
-    r = httpx.post(f"{OLLAMA}/api/chat", timeout=600, json={
-        "model": modelo, "stream": False, "think": False, "format": esquema,
-        "options": {"temperature": 0, "num_ctx": NUM_CTX},
+def juez(modelo, sistema, usuario, esquema, piensa=False):
+    r = httpx.post(f"{OLLAMA}/api/chat", timeout=900, json={
+        "model": modelo, "stream": False, "think": piensa, "format": esquema,
+        # con formato JSON forzado un modelo chico puede repetir ítems hasta llenar el contexto: tope de salida.
+        # Razonando, el pensamiento también consume ese tope y el contexto.
+        "options": {"temperature": 0, "num_ctx": 12288 if piensa else NUM_CTX, "num_predict": 4096 if piensa else 1500},
         "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}],
     })
     r.raise_for_status()
-    return json.loads(r.json()["message"]["content"])
+    try:
+        return json.loads(r.json()["message"]["content"])
+    except json.JSONDecodeError:  # cortado por num_predict
+        return None
 
 
-def juzgar_exactitud(modelo, q, respuesta):
-    return juez(modelo,
+def juzgar_exactitud(modelo, q, respuesta, piensa=False):
+    r = juez(modelo,
+        # este prompt coincide 85% con las etiquetas manuales; uno más estricto bajó a 80% (eval/validar_juez.py)
         "Sos un evaluador estricto. Compará la respuesta de un sistema con la respuesta de referencia. "
         "'correcta': contiene la información clave de la referencia y no la contradice. "
         "'parcial': tiene parte de la información clave, o le falta un dato importante. "
         "'incorrecta': no responde, contradice la referencia o da datos equivocados.",
         f"Pregunta: {q['pregunta']}\n\nReferencia: {q['respuesta']}\n\nRespuesta del sistema: {respuesta}",
         {"type": "object", "properties": {"veredicto": {"enum": list(PUNTAJE)}, "motivo": {"type": "string"}},
-         "required": ["veredicto", "motivo"]})
+         "required": ["veredicto", "motivo"]}, piensa)
+    return r or {"veredicto": "incorrecta", "motivo": "juez sin salida válida"}
 
 
-def juzgar_fidelidad(modelo, respuesta, frags):
-    contexto = "\n\n".join(f"[{i}] {texto}" for i, (_, texto, _, _) in enumerate(frags, 1))
-    return juez(modelo,
-        "Sos un verificador estricto. Decidí si TODAS las afirmaciones de la respuesta están respaldadas "
-        "por los fragmentos. Un dato que no aparece en los fragmentos (un valor, un nombre, un plazo) "
-        "cuenta como no respaldado, aunque sea plausible.",
+def juzgar_fidelidad(modelo, respuesta, frags, piensa=False):
+    """Afirmación por afirmación: un modelo chico aprueba "a ojo" si se le pide un solo veredicto."""
+    contexto = "\n\n".join(f"[{i}] {sec}\n{texto}" for i, (sec, texto, _, _) in enumerate(frags, 1))
+    r = juez(modelo,
+        "Sos un verificador estricto. 1) Separá la respuesta en afirmaciones concretas (cada dato, valor, "
+        "nombre, plazo o regla que afirma). 2) Para cada una, buscá en los fragmentos el texto que la dice. "
+        "Está respaldada solo si un fragmento dice lo mismo; si es plausible pero no aparece, NO está respaldada. "
+        "No juzgues si la respuesta es completa: solo si lo que afirma está en los fragmentos.",
         f"Fragmentos:\n\n{contexto}\n\nRespuesta a verificar: {respuesta}",
-        {"type": "object", "properties": {"respaldada": {"type": "boolean"}, "no_respaldado": {"type": "string"}},
-         "required": ["respaldada", "no_respaldado"]})
+        {"type": "object", "required": ["afirmaciones"], "properties": {"afirmaciones": {"type": "array", "maxItems": 10, "items": {
+            "type": "object", "required": ["afirmacion", "cita_textual", "respaldada"],
+            "properties": {"afirmacion": {"type": "string"}, "cita_textual": {"type": "string"}, "respaldada": {"type": "boolean"}}}}}}, piensa)
+    if r is None:
+        print(f"\n⚠ juez {modelo}: salida JSON inválida, se cuenta como no verificada")
+        return {"respaldada": False, "no_respaldado": "juez sin salida válida", "afirmaciones": []}
+    afs = r["afirmaciones"]
+    return {"respaldada": bool(afs) and all(a["respaldada"] for a in afs),
+            "no_respaldado": "; ".join(a["afirmacion"] for a in afs if not a["respaldada"]), "afirmaciones": afs}
 
 
-def evaluar(preguntas, modelo, modelo_juez, k):
+def evaluar(preguntas, modelo, juez_exactitud, juez_fidelidad, k, piensa=False, busqueda=None):
     filas = []
     for q in preguntas:  # fase 1: todas las respuestas con el generador cargado
-        r = responder(q["pregunta"], k, modelo)
+        r = responder(q["pregunta"], k, modelo, busqueda)
         filas.append({**q, "salida": r["respuesta"], "citas": r["citas"], "tokens_prompt": r["tokens_prompt"],
                       "segundos": sum(r["segundos"].values()), "abstiene": es_abstencion(r["respuesta"]),
                       "recupera": contiene("\n".join(t for _, t, _, _ in r["fragmentos"]), q["evidencia"]) if q["evidencia"] else None,
                       "_frags": r["fragmentos"]})
         print(".", end="", flush=True)
     print()
-    for f in filas:  # fase 2: todos los juicios con el juez cargado
-        if f["tipo"] != "fuera" and not f["abstiene"]:
-            f["exactitud"] = juzgar_exactitud(modelo_juez, f, f["salida"])
-            f["fidelidad"] = juzgar_fidelidad(modelo_juez, f["salida"], f.pop("_frags"))
-        f.pop("_frags", None)
+    juzgar = [f for f in filas if f["tipo"] != "fuera" and not f["abstiene"]]
+    for f in juzgar:  # fase 2 y 3: cada juez con su modelo cargado, sin alternar en la VRAM
+        f["exactitud"] = juzgar_exactitud(juez_exactitud, f, f["salida"], piensa)
         print(".", end="", flush=True)
+    for f in juzgar:
+        f["fidelidad"] = juzgar_fidelidad(juez_fidelidad, f["salida"], f["_frags"], piensa)
+        print(".", end="", flush=True)
+    for f in filas:
+        f.pop("_frags")
     print()
     return filas
 
@@ -127,26 +148,32 @@ if __name__ == "__main__":
     assert contiene("Valor “WSFEX”  y   más", ['valor "wsfex"']) and not contiene("otra cosa", ["valor"])
     assert es_abstencion("No sé: no encontré esto") and not es_abstencion("Sé que no")
     a = argparse.ArgumentParser()
+    a.add_argument("--conjunto", choices=["ajuste", "reserva", "todas"], default="ajuste")
     a.add_argument("--solo-recuperacion", action="store_true")
+    a.add_argument("--busqueda", choices=["vectorial", "hibrida"])
     a.add_argument("--k", type=int, default=5)
     a.add_argument("--modelo", default=MODELO)
-    a.add_argument("--juez", default="llama3.1:8b")
+    # elegidos por coincidencia con las etiquetas manuales: exactitud 85%, fidelidad 75% (eval/validacion_juez.md)
+    a.add_argument("--juez", default="llama3.1:8b", help="juez de exactitud")
+    a.add_argument("--juez-fidelidad", default="qwen3:8b")
+    a.add_argument("--piensa", action="store_true", help="el juez razona antes de responder")
     args = a.parse_args()
 
-    preguntas = list(map(json.loads, open("eval/preguntas.jsonl")))
+    preguntas = [q for q in map(json.loads, open("eval/preguntas.jsonl")) if args.conjunto in ("todas", q["conjunto"])]
     con_evidencia = [q for q in preguntas if q["evidencia"]]
     if not verificar_evidencias(con_evidencia):
         sys.exit("hay evidencias que no están en el índice: corregir el set antes de medir")
 
     if args.solo_recuperacion:
-        fallas = [q for q in con_evidencia if not any(contiene(t, q["evidencia"]) for _, t, _, _ in buscar(q["pregunta"], args.k))]
-        print(f"Recuperación@{args.k}: {1 - len(fallas) / len(con_evidencia):.0%}  fallan: {[q['id'] for q in fallas]}")
+        fallas = [q for q in con_evidencia if not any(contiene(t, q["evidencia"]) for _, t, _, _ in buscar(q["pregunta"], args.k, args.busqueda))]
+        print(f"[{args.busqueda or BUSQUEDA}] Recuperación@{args.k}: {1 - len(fallas) / len(con_evidencia):.0%}  fallan: {[q['id'] for q in fallas]}")
         sys.exit()
 
-    filas = evaluar(preguntas, args.modelo, args.juez, args.k)
-    res = {"fecha": datetime.datetime.now().isoformat(timespec="seconds"), "modelo": args.modelo, "juez": args.juez, "k": args.k, **resumen(filas, args.k)}
+    filas = evaluar(preguntas, args.modelo, args.juez, args.juez_fidelidad, args.k, args.piensa, args.busqueda)
+    res = {"fecha": datetime.datetime.now().isoformat(timespec="seconds"), "conjunto": args.conjunto, "modelo": args.modelo, "juez": args.juez, "juez_fidelidad": args.juez_fidelidad + (" (piensa)" if args.piensa else ""),
+           "busqueda": args.busqueda or BUSQUEDA, "k": args.k, **resumen(filas, args.k)}
     RESULTADOS.mkdir(exist_ok=True)
-    nombre = f"{res['fecha'][:16].replace(':', '')}_{args.modelo.replace(':', '-')}"
+    nombre = f"{res['fecha'][:16].replace(':', '')}_{args.conjunto}_{args.modelo.replace(':', '-')}"
     (RESULTADOS / f"{nombre}.jsonl").write_text("".join(json.dumps(f, ensure_ascii=False) + "\n" for f in filas))
     with open(RESULTADOS / "resumen.jsonl", "a") as out:
         out.write(json.dumps(res, ensure_ascii=False) + "\n")

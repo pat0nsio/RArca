@@ -25,6 +25,7 @@ if __name__ == "__main__":
     a = argparse.ArgumentParser()
     a.add_argument("corrida")
     a.add_argument("--juez")
+    a.add_argument("--piensa", action="store_true")
     args = a.parse_args()
 
     manual = etiquetas(open("eval/validacion_juez.md").read())
@@ -33,8 +34,8 @@ if __name__ == "__main__":
     for i, (ex, fi) in sorted(manual.items()):
         f = filas[i]
         if args.juez:  # mismo índice → misma recuperación que vio el generador
-            j_ex = juzgar_exactitud(args.juez, f, f["salida"])["veredicto"]
-            j_fi = juzgar_fidelidad(args.juez, f["salida"], buscar(f["pregunta"]))["respaldada"]
+            j_ex = juzgar_exactitud(args.juez, f, f["salida"], args.piensa)["veredicto"]
+            j_fi = juzgar_fidelidad(args.juez, f["salida"], buscar(f["pregunta"]), args.piensa)["respaldada"]
         else:
             j_ex, j_fi = f["exactitud"]["veredicto"], f["fidelidad"]["respaldada"]
         acuerdo_ex += j_ex == ex
@@ -42,4 +43,4 @@ if __name__ == "__main__":
         if j_ex != ex or j_fi != fi:
             print(f"#{i:2}  exactitud manual {ex:10} juez {j_ex:10} | fiel manual {fi!s:5} juez {j_fi}")
     n = len(manual)
-    print(f"\nJuez {args.juez or 'de la corrida'}: exactitud {acuerdo_ex}/{n} ({acuerdo_ex / n:.0%}) | fidelidad {acuerdo_fi}/{n} ({acuerdo_fi / n:.0%})")
+    print(f"\nJuez {args.juez or 'de la corrida'}{' (piensa)' if args.piensa else ''}: exactitud {acuerdo_ex}/{n} ({acuerdo_ex / n:.0%}) | fidelidad {acuerdo_fi}/{n} ({acuerdo_fi / n:.0%})")

@@ -29,9 +29,9 @@ def citas(respuesta, frags):
     return [{"n": n, "seccion": frags[n - 1][0], "url": frags[n - 1][2]} for n in nums]
 
 
-def responder(pregunta, k=5, modelo=MODELO):
+def responder(pregunta, k=5, modelo=MODELO, busqueda=None):
     t0 = time.perf_counter()
-    frags = buscar(pregunta, k)
+    frags = buscar(pregunta, k, busqueda)
     t1 = time.perf_counter()
     r = httpx.post(f"{OLLAMA}/api/chat", timeout=600, json={
         "model": modelo, "stream": False, "think": False,

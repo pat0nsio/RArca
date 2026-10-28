@@ -242,8 +242,10 @@ CREATE TABLE documentos (
 -- ponytail: sin índice HNSW; con ~500 filas el escaneo exacto es instantáneo. Agregarlo pasando las 10.000.
 CREATE TABLE fragmentos (
     id serial PRIMARY KEY, documento_id text NOT NULL REFERENCES documentos ON DELETE CASCADE,
-    orden int NOT NULL, seccion text NOT NULL, texto text NOT NULL, embedding vector(1024) NOT NULL
+    orden int NOT NULL, seccion text NOT NULL, texto text NOT NULL, embedding vector(1024) NOT NULL,
+    tsv tsvector GENERATED ALWAYS AS (to_tsvector('spanish', seccion || ' ' || texto)) STORED
 );
+CREATE INDEX ON fragmentos USING gin (tsv);
 """
 LOTE = 32
 
