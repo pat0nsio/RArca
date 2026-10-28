@@ -138,8 +138,8 @@ def resumen(filas, k):
         "fidelidad": sum(f["fidelidad"]["respaldada"] for f in respondidas) / max(len(respondidas), 1),
         "abstencion_correcta": sum(f["abstiene"] for f in fuera) / len(fuera),
         "abstencion_indebida": len(dentro) - len(respondidas),
-        "latencia_mediana_s": statistics.median(segs),
-        "latencia_p95_s": segs[min(len(segs) - 1, round(0.95 * (len(segs) - 1)))],
+        "latencia_mediana_s": round(statistics.median(segs), 2),
+        "latencia_p95_s": round(segs[min(len(segs) - 1, round(0.95 * (len(segs) - 1)))], 2),
         "tokens_prompt_max": max(f["tokens_prompt"] or 0 for f in filas),
     }
 
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     a = argparse.ArgumentParser()
     a.add_argument("--conjunto", choices=["ajuste", "reserva", "todas"], default="ajuste")
     a.add_argument("--solo-recuperacion", action="store_true")
-    a.add_argument("--busqueda", choices=["vectorial", "hibrida"])
+    a.add_argument("--busqueda", choices=["vectorial", "hibrida", "hibrida+rerank"])
     a.add_argument("--k", type=int, default=5)
     a.add_argument("--modelo", default=MODELO)
     # elegidos por coincidencia con las etiquetas manuales: exactitud 85%, fidelidad 75% (eval/validacion_juez.md)

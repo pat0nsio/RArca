@@ -1,3 +1,4 @@
+import functools
 import os
 
 import httpx
@@ -43,9 +44,29 @@ FROM rrf JOIN fragmentos f USING (id) JOIN documentos d ON d.id = f.documento_id
 ORDER BY rrf.puntaje DESC LIMIT %(k)s"""
 
 
+MODELO_RERANKER = "BAAI/bge-reranker-v2-m3-int8"  # Ollama no sirve rerankers: ONNX en CPU vía fastembed
+# El costo en CPU crece con el largo: se reordenan menos candidatos y solo el comienzo de cada uno.
+CANDIDATOS_RERANK = int(os.getenv("CANDIDATOS_RERANK", 20))  # con 10 se pierde toda la ganancia (EXPERIMENTOS.md)
+CHARS_RERANK = int(os.getenv("CHARS_RERANK", 2000))
+
+
+@functools.cache
+def reranker():
+    from fastembed.rerank.cross_encoder import TextCrossEncoder
+    return TextCrossEncoder(model_name=MODELO_RERANKER, cache_dir="data/modelos")
+
+
 def buscar(pregunta, k=5, modo=None):
-    """Los k fragmentos más relevantes de documentos vigentes: por vectores o híbrida (vectores + palabras, RRF)."""
-    sql = HIBRIDA if (modo or BUSQUEDA) == "hibrida" else VECTORIAL
-    params = {"q": vector(embeber([pregunta])[0]), "texto": pregunta, "k": k, "n": CANDIDATOS}
+    """Los k fragmentos más relevantes de documentos vigentes.
+    modo: "vectorial", "hibrida" (vectores + palabras, RRF) o "hibrida+rerank" (reordena los candidatos con un modelo cruzado)."""
+    modo = modo or BUSQUEDA
+    sql = VECTORIAL if modo == "vectorial" else HIBRIDA
+    rerank = modo.endswith("+rerank")
+    params = {"q": vector(embeber([pregunta])[0]), "texto": pregunta, "k": CANDIDATOS_RERANK if rerank else k, "n": CANDIDATOS}
     with psycopg.connect(DB_URL) as c:
-        return c.execute(sql, params).fetchall()
+        filas = c.execute(sql, params).fetchall()
+    if not rerank:
+        return filas
+    puntajes = list(reranker().rerank(pregunta, [f"{sec}\n{texto}"[:CHARS_RERANK] for sec, texto, _, _ in filas]))
+    orden = sorted(zip(puntajes, filas), key=lambda x: x[0], reverse=True)[:k]
+    return [(sec, texto, url, p) for p, (sec, texto, url, _) in orden]
