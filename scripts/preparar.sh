@@ -2,6 +2,7 @@
 # Deja RArca funcionando desde cero: modelos, contenedores e índice. Se puede volver a correr sin romper nada.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+[ -f .env ] && set -a && . ./.env && set +a  # RARCA_HOST, para el mensaje final
 
 GGUF=data/modelos/bge-reranker-v2-m3-Q8_0.gguf
 if [ ! -f "$GGUF" ]; then  # el contenedor del reranker no arranca sin el modelo
