@@ -21,6 +21,28 @@ pero los fragmentos fijos miden siempre ~2000 caracteres y los de sección ~1000
 al modelo, y eso cuesta 1,2 s más por consulta. Se mantiene por sección: más rápida y con citas que nombran la
 sección exacta ("FEDummy > Mensaje de respuesta") en lugar de solo el documento.
 
+## Etapa 5: monotributo (37 páginas del micrositio) y 30 preguntas más
+
+Conjunto de ajuste: 56 preguntas (31 de facturación con evidencia, 19 de monotributo, 6 fuera del corpus).
+Configuración 2 (híbrida + reranker en GPU). Dos corridas idénticas para medir el ruido:
+
+| Tema | Recuperación@5 | Exactitud (corrida 1 / 2) | Fidelidad (1 / 2) |
+|---|---|---|---|
+| Facturación | 74,2% | 62,9% / 66,1% | 90,0% / 87,1% |
+| Monotributo | 100% | 78,9% / 78,9% | 89,5% / 89,5% |
+| Total | 84,0% | 69,0% / 71,0% | 89,8% / 88,0% |
+
+Abstención 100% en ambas; latencia mediana 6,2 s (con el escritorio abierto).
+
+**Ruido.** Con la misma configuración e índice, 6 de 56 respuestas cambian entre corridas: la inferencia en GPU no
+es determinista aun con temperatura 0. En facturación, una pregunta vale 3,2 puntos; diferencias menores a ~10 no
+son concluyentes. La exactitud de facturación antes de monotributo (72,6%) era una sola corrida.
+
+**¿Monotributo le resta a facturación?** No se encontró evidencia: la recuperación de facturación no cambia (74,2%),
+solo el 4% de los candidatos que llegan al reranker en preguntas de facturación son de monotributo, y la pregunta
+que más empeoró (#15) no tiene ninguno. Las páginas de monotributo son cortas y temáticas: 100% de recuperación,
+pero es la parte fácil del set.
+
 ## Cómo leer los números
 
 - **Recuperación**: alguno de los 5 fragmentos contiene la frase de evidencia de la fuente. Es un piso: a veces
