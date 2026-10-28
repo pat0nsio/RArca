@@ -1,11 +1,10 @@
-import os
-
 import httpx
 import psycopg
 from fastapi import FastAPI, Response
+from pydantic import BaseModel, Field
 
-DB_URL = os.getenv("DATABASE_URL", "postgresql://rarca:rarca@localhost:5432/rarca")
-OLLAMA = os.getenv("OLLAMA_URL", "http://localhost:11434")
+from app.busqueda import DB_URL, OLLAMA
+from app.rag import responder
 
 app = FastAPI(title="RArca")
 
@@ -28,3 +27,13 @@ async def health(response: Response):
     ok = status["db"].startswith("pgvector") and isinstance(status["ollama"], list)
     response.status_code = 200 if ok else 503
     return {"ok": ok, **status}
+
+
+class Consulta(BaseModel):
+    pregunta: str = Field(min_length=3, max_length=500)
+
+
+@app.post("/preguntar")
+def preguntar(c: Consulta):
+    r = responder(c.pregunta)
+    return {k: r[k] for k in ("respuesta", "citas", "segundos")}

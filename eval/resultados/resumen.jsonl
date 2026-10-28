@@ -1,0 +1,1 @@
+{"fecha": "2026-10-27T21:09:30", "modelo": "qwen3:8b", "juez": "llama3.1:8b", "k": 5, "recuperacion@5": 0.6, "exactitud": 0.7, "fidelidad": 0.8863636363636364, "abstencion_correcta": 1.0, "abstencion_indebida": 1, "latencia_mediana_s": 5.245, "latencia_p95_s": 7.62, "tokens_prompt_max": 3862}
