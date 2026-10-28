@@ -1,0 +1,7 @@
+.venv/
+.git/
+data/
+eval/
+scripts/
+deploy/
+__pycache__/

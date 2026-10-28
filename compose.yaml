@@ -29,6 +29,22 @@ services:
     volumes:
       - ./data/modelos:/models:ro,Z
 
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://rarca:rarca@db:5432/rarca
+      OLLAMA_URL: http://ollama:11434
+      RERANKER_URL: http://reranker:8080
+    ports:
+      # RARCA_HOST en .env: la IP de Tailscale para entrar desde la tailnet; por defecto solo esta máquina
+      - "${RARCA_HOST:-127.0.0.1}:8000:8000"
+    volumes:
+      - ./data:/app/data:Z
+    depends_on:
+      - db
+      - ollama
+      - reranker
+
   db:
     image: docker.io/pgvector/pgvector:pg17
     environment:

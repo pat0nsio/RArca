@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import httpx
 import psycopg
 from fastapi import FastAPI, Response
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.busqueda import DB_URL, OLLAMA, RERANKER_URL
@@ -40,3 +43,8 @@ class Consulta(BaseModel):
 def preguntar(c: Consulta):
     r = responder(c.pregunta)
     return {k: r[k] for k in ("respuesta", "citas", "segundos")}
+
+
+@app.get("/", include_in_schema=False)
+def inicio():
+    return FileResponse(Path(__file__).parent / "static" / "index.html")

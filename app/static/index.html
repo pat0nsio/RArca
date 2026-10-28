@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RArca</title>
+<style>
+  :root {
+    --fondo: #f7f7f5; --panel: #ffffff; --texto: #1d1d1b; --tenue: #66665f; --borde: #deded8;
+    --acento: #1f5fa8; --aviso-fondo: #fff6e0; --aviso-borde: #e6c46b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #151514; --panel: #1f1f1d; --texto: #ececea; --tenue: #a3a39c; --borde: #34342f;
+      --acento: #7fb0ec; --aviso-fondo: #2c2616; --aviso-borde: #6b5a26;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto);
+         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--tenue); margin: 0 0 20px; }
+  .aviso { background: var(--aviso-fondo); border: 1px solid var(--aviso-borde); border-radius: 8px;
+           padding: 10px 14px; font-size: .9rem; margin-bottom: 20px; }
+  form { display: flex; gap: 8px; }
+  textarea { flex: 1; min-height: 52px; resize: vertical; padding: 12px; border-radius: 8px;
+             border: 1px solid var(--borde); background: var(--panel); color: var(--texto); font: inherit; }
+  button { padding: 0 20px; border: 0; border-radius: 8px; background: var(--acento); color: var(--fondo);
+           font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: wait; }
+  textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+  .ejemplos { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+  .ejemplos button { background: transparent; color: var(--acento); border: 1px solid var(--borde);
+                     padding: 4px 10px; font-weight: 400; font-size: .85rem; }
+  #resultado { margin-top: 28px; }
+  .respuesta { background: var(--panel); border: 1px solid var(--borde); border-radius: 8px;
+               padding: 16px 18px; white-space: pre-wrap; }
+  .respuesta a { color: var(--acento); font-weight: 600; text-decoration: none; }
+  .respuesta a:hover { text-decoration: underline; }
+  h2 { font-size: 1rem; margin: 24px 0 8px; }
+  ol.fuentes { padding-left: 22px; margin: 0; }
+  ol.fuentes li { margin-bottom: 8px; }
+  ol.fuentes a { color: var(--acento); word-break: break-word; }
+  .seccion { display: block; color: var(--tenue); font-size: .9rem; }
+  .tiempos { color: var(--tenue); font-size: .85rem; margin-top: 16px; }
+  .error { color: #c0392b; }
+</style>
+</head>
+<body>
+<main>
+  <h1>RArca</h1>
+  <p class="sub">Preguntas sobre facturación electrónica y monotributo, respondidas con las fuentes oficiales de ARCA.</p>
+  <div class="aviso" role="note">
+    Proyecto técnico, no asesoramiento fiscal. Verificá cada respuesta en la fuente citada antes de usarla.
+  </div>
+
+  <form id="form">
+    <label for="pregunta" style="position:absolute;left:-9999px">Pregunta</label>
+    <textarea id="pregunta" maxlength="500" required placeholder="¿Qué método del WSFEv1 devuelve el último comprobante autorizado?"></textarea>
+    <button id="enviar" type="submit">Preguntar</button>
+  </form>
+  <ul class="ejemplos" aria-label="Preguntas de ejemplo">
+    <li><button type="button">¿Hasta qué día del mes se paga el monotributo?</button></li>
+    <li><button type="button">¿Qué devuelve el método FEDummy?</button></li>
+    <li><button type="button">¿Puedo usar CAEA como modalidad principal?</button></li>
+    <li><button type="button">¿Cuánto cobra un contador?</button></li>
+  </ul>
+
+  <section id="resultado" aria-live="polite"></section>
+</main>
+<script>
+  const form = document.getElementById("form");
+  const campo = document.getElementById("pregunta");
+  const boton = document.getElementById("enviar");
+  const resultado = document.getElementById("resultado");
+
+  document.querySelectorAll(".ejemplos button").forEach(b =>
+    b.addEventListener("click", () => { campo.value = b.textContent; form.requestSubmit(); }));
+  campo.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+  });
+
+  function el(tag, props = {}, ...hijos) {
+    const n = Object.assign(document.createElement(tag), props);
+    n.append(...hijos);
+    return n;
+  }
+
+  // La respuesta del modelo se inserta como texto (nunca como HTML); solo los [n] se vuelven links a la fuente.
+  function respuestaConCitas(texto, citas) {
+    const porNumero = Object.fromEntries(citas.map(c => [c.n, c]));
+    const div = el("div", { className: "respuesta" });
+    for (const parte of texto.split(/(\[\d+\])/)) {
+      const c = porNumero[parte.slice(1, -1)];
+      div.append(c ? el("a", { href: c.url, target: "_blank", rel: "noopener", title: c.seccion }, parte) : parte);
+    }
+    return div;
+  }
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const pregunta = campo.value.trim();
+    if (pregunta.length < 3) return;
+    boton.disabled = true;
+    const inicio = performance.now();
+    const reloj = setInterval(() => {
+      boton.textContent = `${((performance.now() - inicio) / 1000).toFixed(0)} s…`;
+    }, 500);
+    resultado.replaceChildren(el("p", { className: "tiempos" }, "Buscando en las fuentes y redactando…"));
+    try {
+      const r = await fetch("/preguntar", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pregunta }),
+      });
+      if (!r.ok) throw new Error(`el servidor respondió ${r.status}`);
+      const datos = await r.json();
+      const nodos = [respuestaConCitas(datos.respuesta, datos.citas)];
+      if (datos.citas.length) {
+        nodos.push(el("h2", {}, "Fuentes citadas"), el("ol", { className: "fuentes" },
+          ...datos.citas.map(c => el("li", { value: c.n },
+            el("a", { href: c.url, target: "_blank", rel: "noopener" }, c.url.replace(/^https?:\/\//, "")),
+            el("span", { className: "seccion" }, c.seccion)))));
+      }
+      const s = datos.segundos;
+      nodos.push(el("p", { className: "tiempos" },
+        `Búsqueda ${s.busqueda.toFixed(1)} s · redacción ${s.generacion.toFixed(1)} s`));
+      resultado.replaceChildren(...nodos);
+    } catch (err) {
+      resultado.replaceChildren(el("p", { className: "error" }, `No se pudo responder: ${err.message}`));
+    } finally {
+      clearInterval(reloj);
+      boton.disabled = false;
+      boton.textContent = "Preguntar";
+    }
+  });
+</script>
+</body>
+</html>
