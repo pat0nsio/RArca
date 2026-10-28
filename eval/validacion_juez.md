@@ -1,6 +1,7 @@
 # Validación del juez (20 respuestas)
 
 Corrida: `eval/resultados/2026-10-27T2109_qwen3-8b.jsonl` (generador qwen3:8b, juez llama3.1:8b).
+Validado por Claude contra los fragmentos recuperados (no por el autor), 2026-10-27.
 Completá las dos líneas `Tu …` de cada bloque. Exactitud: correcta / parcial / incorrecta. Fiel: si / no
 (fiel = todo lo que afirma la respuesta es cierto según las fuentes; una respuesta incompleta puede ser fiel).
 
@@ -12,8 +13,8 @@ Completá las dos líneas `Tu …` de cada bloque. Exactitud: correcta / parcial
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: correcta
+- Tu fiel: si
 
 ## #5 [dato] ¿Qué valores acepta el campo Concepto en FECAESolicitar?
 
@@ -23,8 +24,8 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: correcta
+- Tu fiel: si
 
 ## #7 [dato] ¿Qué significan los valores A, R y P del campo Resultado en la respuesta de FECAESolicitar?
 
@@ -40,8 +41,9 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: parcial | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: no
+- Nota: P es 'Parcial', no 'Pendiente'; las explicaciones de A/R/P no están en el fragmento citado
 
 ## #8 [dato] ¿Qué método indica cuántos comprobantes se pueden mandar como máximo en un request de FECAESolicitar?
 
@@ -51,8 +53,8 @@ Juez → exactitud: parcial | fiel: si
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: correcta
+- Tu fiel: si
 
 ## #10 [dato] ¿Qué devuelve el método FEDummy?
 
@@ -62,8 +64,9 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: si
+- Nota: no nombra AppServer, DbServer ni AuthServer, que están en el fragmento
 
 ## #14 [dato] ¿Qué fechas son obligatorias al facturar servicios por WSFEv1?
 
@@ -73,8 +76,9 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: parcial | fiel: no
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: si
+- Nota: falta FchVtoPago; lo que afirma está respaldado
 
 ## #15 [dato] ¿Qué cotización hay que informar en MonCotiz si el comprobante es en pesos?
 
@@ -84,8 +88,8 @@ Juez → exactitud: parcial | fiel: no
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: correcta
+- Tu fiel: si
 
 ## #17 [dato] ¿A qué correo se hacen las consultas sobre normativa de factura electrónica?
 
@@ -95,8 +99,8 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: correcta
+- Tu fiel: si
 
 ## #23 [procedimiento] ¿Cómo sé qué número ponerle al próximo comprobante?
 
@@ -106,8 +110,8 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: correcta
+- Tu fiel: si
 
 ## #24 [procedimiento] ¿Cuándo y cómo se solicita un CAEA?
 
@@ -117,8 +121,9 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: parcial | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: si
+- Nota: no nombra FECAEASolicitar ni las fechas de cada quincena
 
 ## #26 [procedimiento] ¿Cómo informo una factura con varias alícuotas de IVA?
 
@@ -128,8 +133,9 @@ Juez → exactitud: parcial | fiel: si
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: si
+- Nota: falta que el Id no se repite (se totaliza por alícuota) y que la suma = ImpIVA
 
 ## #28 [procedimiento] ¿Cómo mando varios comprobantes en un solo request de FECAESolicitar?
 
@@ -139,8 +145,9 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: parcial | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: si
+- Nota: falta CantReg, mismo tipo y punto de venta, y el tope RegXReq
 
 ## #30 [procedimiento] ¿Cómo emito una factura B a un consumidor final sin identificarlo?
 
@@ -150,8 +157,9 @@ Juez → exactitud: parcial | fiel: si
 
 Juez → exactitud: incorrecta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: incorrecta
+- Tu fiel: no
+- Nota: inventa 'Consumidor Final' y '00000000'; el fragmento dice NR o ceros
 
 ## #33 [comparacion] ¿Qué diferencia hay entre CAE y CAEA?
 
@@ -161,8 +169,9 @@ Juez → exactitud: incorrecta | fiel: si
 
 Juez → exactitud: parcial | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: no
+- Nota: 'CAE para el régimen general' no está en los fragmentos; falta CAE por comprobante vs CAEA por quincena
 
 ## #34 [comparacion] ¿Qué diferencia hay entre una validación excluyente y una no excluyente?
 
@@ -172,8 +181,8 @@ Juez → exactitud: parcial | fiel: si
 
 Juez → exactitud: correcta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: correcta
+- Tu fiel: si
 
 ## #37 [comparacion] ¿Qué diferencia hay entre WSFEv1 y WSFEX?
 
@@ -183,8 +192,9 @@ Juez → exactitud: correcta | fiel: si
 
 Juez → exactitud: incorrecta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: incorrecta
+- Tu fiel: no
+- Nota: lo que afirma de WSFEv1 y WSFEX no está en el fragmento citado
 
 ## #40 [comparacion] ¿Qué diferencia hay entre FECompConsultar y FECompUltimoAutorizado?
 
@@ -194,8 +204,9 @@ Juez → exactitud: incorrecta | fiel: si
 
 Juez → exactitud: parcial | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: si
+- Nota: no dice que FECompConsultar devuelve CAE y vencimiento
 
 ## #47 [norma_modificada] ¿Puedo usar CAEA como modalidad principal de facturación?
 
@@ -205,8 +216,9 @@ Juez → exactitud: parcial | fiel: si
 
 Juez → exactitud: correcta | fiel: no
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: parcial
+- Tu fiel: si
+- Nota: el 'No' es correcto y está respaldado (15016), pero no explica que CAEA es solo contingencia
 
 ## #48 [norma_modificada] ¿Desde cuándo se puede informar la condición frente al IVA del receptor y qué pasa si el valor no es válido?
 
@@ -216,8 +228,9 @@ Juez → exactitud: correcta | fiel: no
 
 Juez → exactitud: incorrecta | fiel: si
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: incorrecta
+- Tu fiel: no
+- Nota: 10245 es la observación de obligatoriedad, no de valor inválido; no menciona el 6/4/2025
 
 ## #49 [norma_modificada] Al informar comprobantes emitidos con CAEA, ¿tengo que informar la fecha y hora de generación?
 
@@ -227,5 +240,6 @@ Juez → exactitud: incorrecta | fiel: si
 
 Juez → exactitud: incorrecta | fiel: no
 
-- Tu exactitud: 
-- Tu fiel: 
+- Tu exactitud: incorrecta
+- Tu fiel: no
+- Nota: dice que no es obligatorio; desde la v4.6 lo es
