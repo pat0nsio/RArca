@@ -50,6 +50,20 @@ CANDIDATOS_RERANK = int(os.getenv("CANDIDATOS_RERANK", 20))  # con 10 se pierde 
 CHARS_RERANK = int(os.getenv("CHARS_RERANK", 2000))
 
 
+RERANKER_URL = os.getenv("RERANKER_URL")  # llama.cpp en GPU (compose: reranker); sin definir, fastembed en CPU
+
+
+def puntuar(pregunta, textos):
+    if RERANKER_URL:
+        r = httpx.post(f"{RERANKER_URL}/v1/rerank", json={"query": pregunta, "documents": textos}, timeout=60)
+        r.raise_for_status()
+        puntajes = [0.0] * len(textos)
+        for x in r.json()["results"]:
+            puntajes[x["index"]] = x["relevance_score"]
+        return puntajes
+    return list(reranker().rerank(pregunta, textos))
+
+
 @functools.cache
 def reranker():
     from fastembed.rerank.cross_encoder import TextCrossEncoder
@@ -67,6 +81,6 @@ def buscar(pregunta, k=5, modo=None):
         filas = c.execute(sql, params).fetchall()
     if not rerank:
         return filas
-    puntajes = list(reranker().rerank(pregunta, [f"{sec}\n{texto}"[:CHARS_RERANK] for sec, texto, _, _ in filas]))
+    puntajes = puntuar(pregunta, [f"{sec}\n{texto}"[:CHARS_RERANK] for sec, texto, _, _ in filas])
     orden = sorted(zip(puntajes, filas), key=lambda x: x[0], reverse=True)[:k]
     return [(sec, texto, url, p) for p, (sec, texto, url, _) in orden]

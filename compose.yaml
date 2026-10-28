@@ -14,6 +14,21 @@ services:
     volumes:
       - ollama:/root/.ollama
 
+  reranker:
+    # Ollama no sirve rerankers: llama.cpp con Vulkan (la RX 6650 XT no necesita el override de ROCm)
+    image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+    devices:
+      - /dev/dri
+    group_add:
+      - keep-groups
+    command: >
+      -m /models/bge-reranker-v2-m3-Q8_0.gguf --reranking --host 0.0.0.0 --port 8080
+      -ngl 99 -c 8192 -b 2048 -ub 2048
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - ./data/modelos:/models:ro,Z
+
   db:
     image: docker.io/pgvector/pgvector:pg17
     environment:
