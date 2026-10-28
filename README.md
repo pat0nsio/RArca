@@ -8,16 +8,17 @@ máquina, y con una evaluación que mide cuánto acierta.
 
 ## Resultados
 
-Conjunto de ajuste (56 preguntas). La medición final sobre las 24 preguntas de reserva, que no se usaron para
-ajustar nada, está pendiente.
+Medición final sobre las **24 preguntas de reserva**, que no se usaron para ajustar nada (dos corridas, idénticas):
 
-| Métrica | Facturación | Monotributo |
-|---|---|---|
-| Recuperación@5 (la evidencia llega al modelo) | 74,2% | 100% |
-| Exactitud (juez, dos corridas) | 62,9–66,1% | 78,9% |
-| Fidelidad (lo que afirma está en las fuentes) | 87–90% | 89,5% |
-| Abstención ante preguntas fuera del corpus | 100% | 100% |
-| Latencia mediana / p95 | 6,2 s / 9,1 s | |
+| Métrica | Total | Facturación (14) | Monotributo (8) |
+|---|---|---|---|
+| Recuperación@5 (la evidencia llega al modelo) | 77,3% | 64,3% | 100% |
+| Exactitud (juez) | 72,7% | 67,9% | 81,2% |
+| Fidelidad (lo que afirma está en las fuentes) | 90,5% | 84,6% | 100% |
+| Abstención ante preguntas fuera del corpus | 100% (2/2) | | |
+| Latencia mediana / p95 | 5,7 s / 9,0 s | | |
+
+Las 2 preguntas restantes de la reserva son fuera del corpus. Con 14 preguntas de facturación, una vale 7 puntos.
 
 Cómo se llegó ahí, una mejora por vez (facturación, 31 preguntas con evidencia):
 
@@ -71,8 +72,10 @@ flowchart LR
 
 ## Limitaciones conocidas
 
-- **Ruido entre corridas.** La inferencia en GPU no es determinista: con todo igual, 6 de 56 respuestas cambian.
-  Con 31 preguntas de facturación, diferencias menores a ~10 puntos no son concluyentes.
+- **Ruido entre corridas.** Con el escritorio abierto, dos corridas idénticas difirieron en 6 de 56 respuestas;
+  sin escritorio, las dos corridas finales dieron lo mismo (hipótesis: con la VRAM llena, Ollama pasa capas a la
+  CPU y la inferencia deja de ser determinista). Con 31 preguntas de facturación, diferencias menores a ~10
+  puntos no son concluyentes.
 - **Fallas de recuperación en facturación (26%)**: preguntas de procedimiento redactadas en lenguaje natural
   contra tablas técnicas, y respuestas repartidas entre fragmentos vecinos.
 - **El modelo de 8B a veces completa con datos plausibles** cuando la evidencia no llegó, en vez de decir "no sé".

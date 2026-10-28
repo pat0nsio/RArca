@@ -43,6 +43,21 @@ solo el 4% de los candidatos que llegan al reranker en preguntas de facturación
 que más empeoró (#15) no tiene ninguno. Las páginas de monotributo son cortas y temáticas: 100% de recuperación,
 pero es la parte fácil del set.
 
+## Medición final: conjunto de reserva (24 preguntas, una sola vez)
+
+Configuración 2, sin sesión gráfica, dos corridas: **resultados idénticos**.
+
+| Tema | Recuperación@5 | Exactitud | Fidelidad | Abstención | Latencia mediana / p95 |
+|---|---|---|---|---|---|
+| Facturación (14) | 64,3% | 67,9% | 84,6% | 1/1 | |
+| Monotributo (8) | 100% | 81,2% | 100% | 1/1 | |
+| Total (22 + 2 fuera) | 77,3% | 72,7% | 90,5% | 100% | 5,7 s / 9,0 s |
+
+Contra el conjunto de ajuste, facturación pierde 10 puntos de recuperación (74,2% → 64,3%): 1 pregunta de 14 son
+7 puntos, así que la brecha está entre el ruido de muestra chica y un leve sobreajuste a las preguntas de ajuste.
+Que las dos corridas coincidan, a diferencia de las de la etapa 5 (hechas con el escritorio abierto), sugiere que
+el no determinismo venía de pasar capas a la CPU por falta de VRAM.
+
 ## Cómo leer los números
 
 - **Recuperación**: alguno de los 5 fragmentos contiene la frase de evidencia de la fuente. Es un piso: a veces
