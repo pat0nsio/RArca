@@ -3,7 +3,7 @@ import psycopg
 from fastapi import FastAPI, Response
 from pydantic import BaseModel, Field
 
-from app.busqueda import DB_URL, OLLAMA
+from app.busqueda import DB_URL, OLLAMA, RERANKER_URL
 from app.rag import responder
 
 app = FastAPI(title="RArca")
@@ -22,9 +22,12 @@ async def health(response: Response):
         async with httpx.AsyncClient(timeout=3) as client:
             r = await client.get(f"{OLLAMA}/api/tags")
             status["ollama"] = [m["name"] for m in r.json()["models"]]
+            r = await client.get(f"{RERANKER_URL}/health")
+            status["reranker"] = r.json().get("status", "?")
     except Exception as e:
-        status["ollama"] = f"error: {e}"
-    ok = status["db"].startswith("pgvector") and isinstance(status["ollama"], list)
+        status.setdefault("ollama", f"error: {e}")
+        status.setdefault("reranker", f"error: {e}")
+    ok = status["db"].startswith("pgvector") and isinstance(status["ollama"], list) and status.get("reranker") == "ok"
     response.status_code = 200 if ok else 503
     return {"ok": ok, **status}
 

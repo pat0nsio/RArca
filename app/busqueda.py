@@ -1,4 +1,3 @@
-import functools
 import os
 
 import httpx
@@ -19,7 +18,7 @@ def vector(v):
     return "[" + ",".join(map(str, v)) + "]"
 
 
-BUSQUEDA = os.getenv("BUSQUEDA", "hibrida")
+BUSQUEDA = os.getenv("BUSQUEDA", "hibrida+rerank")
 CANDIDATOS = 20  # por cada método, antes de fusionar
 
 VECTORIAL = """
@@ -44,30 +43,19 @@ FROM rrf JOIN fragmentos f USING (id) JOIN documentos d ON d.id = f.documento_id
 ORDER BY rrf.puntaje DESC LIMIT %(k)s"""
 
 
-MODELO_RERANKER = "BAAI/bge-reranker-v2-m3-int8"  # Ollama no sirve rerankers: ONNX en CPU vía fastembed
-# El costo en CPU crece con el largo: se reordenan menos candidatos y solo el comienzo de cada uno.
-CANDIDATOS_RERANK = int(os.getenv("CANDIDATOS_RERANK", 20))  # con 10 se pierde toda la ganancia (EXPERIMENTOS.md)
-CHARS_RERANK = int(os.getenv("CHARS_RERANK", 2000))
-
-
-RERANKER_URL = os.getenv("RERANKER_URL")  # llama.cpp en GPU (compose: reranker); sin definir, fastembed en CPU
+# Ollama no sirve rerankers: bge-reranker-v2-m3 corre en llama.cpp con Vulkan (servicio reranker del compose).
+# En CPU tardaba 19 s por consulta; en GPU, ~1 s. Con menos candidatos se pierde la ganancia (EXPERIMENTOS.md).
+RERANKER_URL = os.getenv("RERANKER_URL", "http://localhost:8081")
+CANDIDATOS_RERANK = 20
 
 
 def puntuar(pregunta, textos):
-    if RERANKER_URL:
-        r = httpx.post(f"{RERANKER_URL}/v1/rerank", json={"query": pregunta, "documents": textos}, timeout=60)
-        r.raise_for_status()
-        puntajes = [0.0] * len(textos)
-        for x in r.json()["results"]:
-            puntajes[x["index"]] = x["relevance_score"]
-        return puntajes
-    return list(reranker().rerank(pregunta, textos))
-
-
-@functools.cache
-def reranker():
-    from fastembed.rerank.cross_encoder import TextCrossEncoder
-    return TextCrossEncoder(model_name=MODELO_RERANKER, cache_dir="data/modelos")
+    r = httpx.post(f"{RERANKER_URL}/v1/rerank", json={"query": pregunta, "documents": textos}, timeout=60)
+    r.raise_for_status()
+    puntajes = [0.0] * len(textos)
+    for x in r.json()["results"]:
+        puntajes[x["index"]] = x["relevance_score"]
+    return puntajes
 
 
 def buscar(pregunta, k=5, modo=None):
@@ -81,6 +69,6 @@ def buscar(pregunta, k=5, modo=None):
         filas = c.execute(sql, params).fetchall()
     if not rerank:
         return filas
-    puntajes = puntuar(pregunta, [f"{sec}\n{texto}"[:CHARS_RERANK] for sec, texto, _, _ in filas])
+    puntajes = puntuar(pregunta, [f"{sec}\n{texto}" for sec, texto, _, _ in filas])
     orden = sorted(zip(puntajes, filas), key=lambda x: x[0], reverse=True)[:k]
     return [(sec, texto, url, p) for p, (sec, texto, url, _) in orden]
