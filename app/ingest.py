@@ -1,7 +1,8 @@
 """Ingesta: descarga las fuentes de ARCA, las parte por sección o artículo, calcula los
 embeddings y reconstruye el índice en pgvector desde cero.
 
-uso: uv run python -m app.ingest   (también deja data/fragmentos.jsonl para inspeccionar)
+uso: uv run python -m app.ingest                reconstrucción completa (deja data/fragmentos.jsonl para inspeccionar)
+     uv run python -m app.ingest --actualizar   job semanal: reindexa solo lo que cambió
 """
 import difflib
 import hashlib
@@ -56,14 +57,15 @@ FUENTES += [{"id": "mono-" + re.sub(r"\W+", "-", p.removesuffix(".asp")).strip("
              "titulo": "Monotributo", "url": f"https://www.arca.gob.ar/monotributo/{p}"} for p in MONOTRIBUTO]
 
 
-def descargar(fuente):
-    destino = RAW / f"{fuente['id']}.{'pdf' if fuente['url'].endswith('.pdf') else 'html'}"
-    if not destino.exists():
-        RAW.mkdir(parents=True, exist_ok=True)
-        req = urllib.request.Request(fuente["url"], headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=60) as r:
-            destino.write_bytes(r.read())
-    return destino
+def archivo(fuente):
+    return RAW / f"{fuente['id']}.{'pdf' if fuente['url'].endswith('.pdf') else 'html'}"
+
+
+def descargar(fuente, destino):
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    req = urllib.request.Request(fuente["url"], headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        destino.write_bytes(r.read())
 
 
 # --- manuales (PDF → markdown) ---
@@ -304,7 +306,7 @@ def fichas_categorias(tabla):
 def html_a_markdown(raw):
     m = re.search(r"<article.*?</article>", raw, re.S)
     # sin <article> (solo categorías): del último h1 (el primero es el nombre del sitio) al pie oculto "Footer ARCA"
-    pie = raw.find('class="sr-only">Footer')
+    pie = raw.find('<h2 class="sr-only">Footer')
     t = m[0] if m else raw[max(raw.rfind("<h1"), 0):pie if pie > 0 else None]
     t = re.sub(r"<!--.*?-->|<(script|style|nav|header|footer)[^>]*>.*?</\1>", " ", t, flags=re.S | re.I)
     t = re.sub(r"<table.*?</table>", lambda x: "\n\n" + tabla_markdown(x[0]) + "\n\n", t, flags=re.S)
@@ -337,7 +339,7 @@ CREATE TABLE documentos (
     norma text, fecha date, vigente boolean NOT NULL, sha256 text NOT NULL,
     ingestado timestamptz NOT NULL DEFAULT now()
 );
--- ponytail: sin índice HNSW; con ~500 filas el escaneo exacto es instantáneo. Agregarlo pasando las 10.000.
+-- ponytail: sin índice HNSW; con ~600 filas el escaneo exacto es instantáneo. Agregarlo pasando las 10.000.
 CREATE TABLE fragmentos (
     id serial PRIMARY KEY, documento_id text NOT NULL REFERENCES documentos ON DELETE CASCADE,
     orden int NOT NULL, seccion text NOT NULL, texto text NOT NULL, embedding vector(1024) NOT NULL,
@@ -345,34 +347,100 @@ CREATE TABLE fragmentos (
 );
 CREATE INDEX ON fragmentos USING gin (tsv);
 """
+# El registro de cambios sobrevive a las reconstrucciones completas.
+REGISTRO = """CREATE TABLE IF NOT EXISTS actualizaciones (
+    fecha timestamptz NOT NULL DEFAULT now(), documento_id text NOT NULL, accion text NOT NULL, detalle text)"""
 LOTE = 32
 
 
-def indexar(frags):
+def insertar(conn, frags):
     # se embebe la ruta de títulos junto al texto: "FEDummy > Mensaje de respuesta" le da contexto a una tabla suelta
     embeddings = []
     for i in range(0, len(frags), LOTE):
         embeddings += embeber([f"{x['seccion']}\n\n{x['texto']}" for x in frags[i:i + LOTE]])
+    docs = {x["id"]: x for x in frags}
+    conn.cursor().executemany(
+        "INSERT INTO documentos (id, titulo, url, tipo, norma, fecha, vigente, sha256) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        [(d["id"], d["titulo"], d["url"], d["tipo"], d["norma"], d["fecha"], d["vigente"], d["sha256"]) for d in docs.values()])
+    conn.cursor().executemany(
+        "INSERT INTO fragmentos (documento_id, orden, seccion, texto, embedding) VALUES (%s,%s,%s,%s,%s::vector)",
+        [(x["id"], x["orden"], x["seccion"], x["texto"], vector(e)) for x, e in zip(frags, embeddings)])
+
+
+def indexar(frags):
     with psycopg.connect(DB_URL) as conn:  # una transacción: si algo falla, queda el índice anterior
         conn.execute(ESQUEMA)
-        docs = {x["id"]: x for x in frags}
-        conn.cursor().executemany(
-            "INSERT INTO documentos (id, titulo, url, tipo, norma, fecha, vigente, sha256) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-            [(d["id"], d["titulo"], d["url"], d["tipo"], d["norma"], d["fecha"], d["vigente"], d["sha256"]) for d in docs.values()])
-        conn.cursor().executemany(
-            "INSERT INTO fragmentos (documento_id, orden, seccion, texto, embedding) VALUES (%s,%s,%s,%s,%s::vector)",
-            [(x["id"], x["orden"], x["seccion"], x["texto"], vector(e)) for x, e in zip(frags, embeddings)])
+        conn.execute(REGISTRO)
+        insertar(conn, frags)
+        conn.execute("INSERT INTO actualizaciones (documento_id, accion, detalle) VALUES ('*', 'reconstruccion', %s)",
+                     (f"{len(frags)} fragmentos",))
+
+
+def fragmentos_de(f, forzar=False):
+    """forzar: vuelve a bajar la fuente. La copia nueva reemplaza a la guardada solo si se pudo procesar:
+    ARCA responde 200 con una página vacía a una URL que ya no existe."""
+    path = archivo(f)
+    if forzar or not path.exists():
+        nuevo = path.with_name(path.name + ".nuevo")
+        try:
+            descargar(f, nuevo)
+            meta, secciones = partir_fuente(f, nuevo)
+            if not secciones:
+                raise ValueError("la descarga no tiene contenido")
+            nuevo.replace(path)
+        finally:
+            nuevo.unlink(missing_ok=True)
+    else:
+        meta, secciones = partir_fuente(f, path)
+    # hash del contenido extraído, no del archivo: una página que solo cambia scripts o fechas no se reindexa
+    sha = hashlib.sha256("\n".join(f"{s}\n{t}" for s, t in secciones).encode()).hexdigest()
+    doc = {"fecha": None, **f, "vigente": True, **meta, "sha256": sha}
+    out = []
+    for orden, (seccion, texto) in enumerate(secciones):
+        seccion = seccion.removeprefix("Página").removeprefix(" > ")
+        out.append({**doc, "seccion": f"{doc['titulo']} > {seccion}" if seccion else doc["titulo"], "orden": orden, "texto": texto})
+    return out
+
+
+def partir_fuente(f, path):
+    return {"manual": lambda p: partir_manual(p, f.get("ignorar")), "norma": partir_norma, "web": partir_web}[f["tipo"]](path)
 
 
 def fragmentos():
+    return [x for f in FUENTES for x in fragmentos_de(f)]
+
+
+def actualizar():
+    """Job semanal: vuelve a bajar las fuentes y reindexa solo los documentos cuyo contenido cambió."""
+    with psycopg.connect(DB_URL) as conn:
+        conn.execute(REGISTRO)
+        anteriores = dict(conn.execute("SELECT id, sha256 FROM documentos").fetchall())
+    cambios = []
     for f in FUENTES:
-        path = descargar(f)
-        partir = {"manual": lambda p: partir_manual(p, f.get("ignorar")), "norma": partir_norma, "web": partir_web}[f["tipo"]]
-        meta, secciones = partir(path)
-        doc = {"fecha": None, **f, "vigente": True, **meta, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
-        for orden, (seccion, texto) in enumerate(secciones):
-            seccion = seccion.removeprefix("Página").removeprefix(" > ")
-            yield {**doc, "seccion": f"{doc['titulo']} > {seccion}" if seccion else doc["titulo"], "orden": orden, "texto": texto}
+        try:
+            frags = fragmentos_de(f, forzar=True)
+        except Exception as e:  # una caída de ARCA no puede vaciar el índice: se conserva la versión anterior
+            cambios.append((f["id"], "error", f"se mantiene la versión anterior: {e}"))
+            continue
+        sha = frags[0]["sha256"] if frags else None
+        if sha == anteriores.get(f["id"]):
+            continue
+        with psycopg.connect(DB_URL) as conn:  # una transacción por documento
+            conn.execute("DELETE FROM documentos WHERE id = %s", (f["id"],))
+            insertar(conn, frags)
+            accion = "cambiado" if f["id"] in anteriores else "nuevo"
+            conn.execute("INSERT INTO actualizaciones (documento_id, accion, detalle) VALUES (%s, %s, %s)",
+                         (f["id"], accion, f"{len(frags)} fragmentos"))
+        cambios.append((f["id"], accion, f"{len(frags)} fragmentos"))
+    with psycopg.connect(DB_URL) as conn:
+        for id_ in set(anteriores) - {f["id"] for f in FUENTES}:
+            conn.execute("DELETE FROM documentos WHERE id = %s", (id_,))
+            conn.execute("INSERT INTO actualizaciones (documento_id, accion) VALUES (%s, 'eliminado')", (id_,))
+            cambios.append((id_, "eliminado", ""))
+        for id_, accion, detalle in cambios:
+            if accion == "error":
+                conn.execute("INSERT INTO actualizaciones (documento_id, accion, detalle) VALUES (%s, %s, %s)", (id_, accion, detalle))
+    return cambios
 
 
 def _check():
@@ -406,8 +474,15 @@ def _check():
 
 
 if __name__ == "__main__":
+    import sys
     _check()
-    frags = list(fragmentos())
+    if "--actualizar" in sys.argv:
+        cambios = actualizar()
+        for id_, accion, detalle in cambios:
+            print(f"{accion:10} {id_:40} {detalle}")
+        print(f"{len(cambios)} cambios" if cambios else "sin cambios")
+        sys.exit()
+    frags = fragmentos()
     Path("data/fragmentos.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in frags))
     indexar(frags)
     for f in FUENTES:

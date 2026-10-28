@@ -1,0 +1,9 @@
+[Unit]
+Description=RArca: vuelve a bajar las fuentes de ARCA y reindexa lo que cambió
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Projects/RArca
+# la ingesta necesita Postgres y Ollama (embeddings) levantados
+ExecStartPre=/usr/bin/podman-compose up -d db ollama
+ExecStart=%h/.local/share/mise/installs/uv/latest/.mise-bins/uv run python -m app.ingest --actualizar

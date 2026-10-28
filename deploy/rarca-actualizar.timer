@@ -1,0 +1,10 @@
+[Unit]
+Description=RArca: actualización semanal del corpus
+
+[Timer]
+OnCalendar=Mon *-*-* 04:00:00
+# si la máquina estaba apagada el lunes, corre al encender
+Persistent=true
+
+[Install]
+WantedBy=timers.target
